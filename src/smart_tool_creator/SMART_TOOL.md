@@ -51,6 +51,7 @@ through GitHub Copilot, signed in as the GitHub CLI's user, and say so in their 
 
 ```bash
 smart-tool-creator manifest    # print the tool's manifest as JSON
+smart-tool-creator init release-notes --description "Summarizes changelogs into release notes" --skill
 ```
 
 The full library surface is documented in the repository's `docs/` directory.

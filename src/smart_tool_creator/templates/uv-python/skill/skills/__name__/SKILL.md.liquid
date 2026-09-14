@@ -1,0 +1,86 @@
+---
+name: {{ name }}
+description: >-
+  {{ description }}. Drive it from the command line as `{{ name }}`, or from Python through
+  `{{ package }}.lib`. Triggers on "{{ name }}".
+license: MIT
+---
+
+# Using {{ name }}
+
+{{ description }}.
+
+**The library is the tool.** `{{ package }}.lib` holds every capability. The CLI is a thin
+wrapper over it, so anything you can do from the shell you can also do from Python.
+
+## Before writing code
+
+Confirm every capability and argument against `--help` before using it. Do not fill gaps
+from memory.
+
+```bash
+{{ name }} --help
+{{ name }} <command> --help
+```
+
+Each command's help says whether it is model-backed. When `--help` is not enough, the
+repository's documentation carries the rest:
+
+```
+docs/01-library.md   every capability as Python: signatures and returns
+docs/02-cli.md       every capability as a command: flags, defaults, exit codes
+```
+
+## Install
+
+From a clone of the repository:
+
+```bash
+# as a CLI
+uv tool install .
+
+# as a library, from another project
+uv add /path/to/{{ name }}
+```
+
+Verify with `{{ name }} manifest`, which needs no credentials.
+
+## Prerequisites
+
+Deterministic capabilities need only `uv`. Model-backed capabilities run through GitHub
+Copilot, signed in as the GitHub CLI's user: `gh` must be installed and `gh auth login`
+completed with an account that has a Copilot subscription. Without that, a model-backed
+capability fails immediately and names what to configure; it never falls back to a
+deterministic answer.
+
+Runs on Linux, macOS, and Windows.
+
+## Reading the manifest
+
+The manifest says what the tool is for and what it needs, so a caller can decide whether
+to reach for it before invoking anything.
+
+```bash
+{{ name }} manifest
+```
+
+```python
+from {{ package }}.lib import load_manifest
+
+manifest = load_manifest()
+manifest.name, manifest.version, manifest.requires
+```
+
+Read it through the library or CLI rather than by locating a file.
+
+## Output and failure contract
+
+Results go to stdout, diagnostics to stderr. A failure prints a message naming what went
+wrong and how to fix it, and exits non-zero: 1 for a failure the tool can name, 2 for a
+bad invocation. Never treat an empty result as success.
+
+## Choosing a surface
+
+Import the library from Python. Shell out to the CLI from anything that cannot import
+Python in-process: a shell script, a CI job, or an agent that can run commands but not
+load a Python object. Both reach the same capabilities.

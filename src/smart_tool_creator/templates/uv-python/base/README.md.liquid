@@ -1,0 +1,34 @@
+# {{ title }} Smart Tool
+
+{{ description }}.
+
+{{ title }} is a [Smart Tool](https://github.com/microsoft/amplifier-smart-tools): a library with a thin CLI over it, whose model-backed capabilities sit behind an interface.
+
+## Installation
+
+Prerequisites:
+- [uv](https://docs.astral.sh/uv/getting-started/installation/).
+- [GitHub CLI](https://cli.github.com/) signed in to an account with a [GitHub Copilot subscription](https://github.com/github/copilot-cli#prerequisites) for the model-backed capabilities.
+
+From a clone of this repository:
+
+```bash
+uv tool install .
+```
+
+To upgrade after pulling changes, run the same command with `--force`.
+{% if skill %}
+To teach a coding agent how to drive it, install the [skill](skills/{{ name }}/SKILL.md) at `skills/{{ name }}/` with your agent's skills client.
+{% endif %}
+## Interface
+
+```bash
+# Print the tool's manifest as JSON
+{{ name }} manifest
+```
+
+See the [CLI reference](docs/02-cli.md) for every flag and the [library reference](docs/01-library.md) for the Python surface.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to set up your development environment.

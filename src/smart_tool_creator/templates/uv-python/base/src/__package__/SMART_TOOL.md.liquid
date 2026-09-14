@@ -1,0 +1,44 @@
+---
+smart_tool_format: 1
+name: {{ name }}
+version: {{ version }}
+description: >-
+  {{ description }}
+use_cases:
+  - >-
+    {{ description }}
+platforms:
+  - linux
+  - macos
+  - windows
+requires:
+  - name: gh
+    purpose: >-
+      Generates the token that signs in to GitHub Copilot. Without it, the model-backed
+      capabilities cannot authenticate.
+    optional: true
+    install: https://cli.github.com/
+  - name: github-copilot-subscription
+    purpose: >-
+      A Copilot subscription on the account signed in to gh powers the model-backed
+      capabilities. Without it, only the deterministic capabilities run.
+    optional: true
+    install: https://github.com/github/copilot-cli#prerequisites
+---
+
+# {{ title }}
+
+{{ description }}.
+
+## Straight and smart paths
+
+Deterministic capabilities run with no provider configured. Model-backed capabilities go
+through GitHub Copilot, signed in as the GitHub CLI's user, and say so in their help text.
+
+## Worked invocations
+
+```bash
+{{ name }} manifest    # print the tool's manifest as JSON
+```
+
+The full library surface is documented in the repository's `docs/` directory.

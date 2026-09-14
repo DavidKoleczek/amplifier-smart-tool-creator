@@ -37,6 +37,9 @@ npx skills add DavidKoleczek/amplifier-smart-tool-creator
 ```bash
 # Print the tool's manifest as JSON
 smart-tool-creator manifest
+
+# Scaffold a new smart tool into ./release-notes, optionally with an Agent Skill. Specify a specific directory with --directory
+smart-tool-creator init release-notes --description "Summarizes changelogs into release notes" --skill
 ```
 
 See the [CLI reference](docs/02-cli.md) for every flag and the [library reference](docs/01-library.md) for the Python surface.

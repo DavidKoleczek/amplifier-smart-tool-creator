@@ -1,15 +1,10 @@
-from pathlib import Path
-from typing import Literal
-
 from pydantic import BaseModel, Field
-
-DEFAULT_INTELLIGENCE_MODEL = "gpt-6-astra"
 
 SEMVER_PATTERN = r"^\d+\.\d+\.\d+$"
 SLUG_PATTERN = r"^[a-z0-9]+(-[a-z0-9]+)*$"
 
 
-class SmartToolCreatorError(Exception):
+class {{ error_class }}(Exception):
     """Raised for any failure the library can name and explain how to fix."""
 
 
@@ -35,22 +30,6 @@ class Manifest(BaseModel):
     use_cases: list[str]
     platforms: list[str]
     requires: list[ManifestRequirement] = Field(default_factory=list)
-
-
-# endregion
-
-# region: Init
-
-Language = Literal["uv-python"]
-IntelligenceLayer = Literal["copilot-sdk"]
-
-
-class Scaffold(BaseModel):
-    """What init produced."""
-
-    root: Path = Field(description="The new tool's distribution root")
-    files: list[Path] = Field(description="Every file written, relative to the root")
-    references: list[str] = Field(description="The repositories cloned into reference/")
 
 
 # endregion

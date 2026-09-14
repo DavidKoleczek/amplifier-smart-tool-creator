@@ -85,6 +85,35 @@ manifest.name, manifest.version, manifest.requires
 
 Read it through the library or CLI rather than by locating a file.
 
+## Scaffolding a new smart tool
+
+`init` creates a git repository (no remote) holding a tool that already passes the
+conformance kit: manifest, descriptor, library, thin CLI, docs, tests, an `AGENTS.md`
+carrying the spec's principles, and a gitignored `reference/` with shallow clones of the
+spec and the SDK for you to read while developing. The environment is synced and the
+first commit is made. Deterministic, but needs network for `uv sync` and the clones.
+
+```bash
+smart-tool-creator init release-notes --description "Summarizes changelogs into release notes" --skill
+```
+
+```python
+from smart_tool_creator.lib import init
+
+scaffold = init("release-notes", "Summarizes changelogs into release notes", skill=True)
+scaffold.root, scaffold.files, scaffold.references
+```
+
+Pick a slug name (lowercase, digits, hyphens) and a one-sentence description that says
+what the tool is for; both land in the manifest. `--directory` chooses where it goes,
+default `./<name>`, which must not exist or must be empty. `--skill` also writes
+`skills/<name>/SKILL.md`. Language and intelligence layer default to `uv-python` and
+`copilot-sdk`; `--help` lists the choices.
+
+Afterwards, work inside the new repository: read its `AGENTS.md` first, add domain
+capabilities to its library, and run the conformance kit as its `CONTRIBUTING.md`
+describes. Adding a remote and pushing is the user's call.
+
 ## Output and failure contract
 
 Results go to stdout, diagnostics to stderr. A failure prints a message naming what went
