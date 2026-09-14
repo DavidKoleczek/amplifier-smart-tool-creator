@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Literal
+from typing import Literal, NamedTuple
 
 from pydantic import BaseModel, Field
 
@@ -26,7 +26,7 @@ class ManifestRequirement(BaseModel):
 
 
 class Manifest(BaseModel):
-    """The machine-readable frontmatter of SMART_TOOL.md."""
+    """The structured form of SMART_TOOL.md: the frontmatter as fields, the Markdown below it as text."""
 
     smart_tool_format: int
     name: str = Field(pattern=SLUG_PATTERN)
@@ -35,6 +35,20 @@ class Manifest(BaseModel):
     use_cases: list[str]
     platforms: list[str]
     requires: list[ManifestRequirement] = Field(default_factory=list)
+    body: str = Field(description="The Markdown below the frontmatter: the skill `--help` renders")
+
+
+# endregion
+
+# region: Skill
+
+
+class Capability(NamedTuple):
+    """One capability of the tool, as the skill's capability list presents it."""
+
+    name: str
+    summary: str
+    model_backed: bool
 
 
 # endregion

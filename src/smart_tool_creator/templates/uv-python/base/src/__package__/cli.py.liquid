@@ -1,5 +1,7 @@
 """Command line entry point for {{ title }}."""
 
+from typing import Annotated
+
 import typer
 
 from {{ package }} import lib
@@ -8,18 +10,34 @@ from {{ package }}.schemas import {{ error_class }}
 app = typer.Typer(
     no_args_is_help=True,
     pretty_exceptions_show_locals=False,
+    # Every command answers both flags. The root callback claims `--help` for the skill below, and Click drops a
+    # help option name already taken by a parameter, which leaves the root's generated summary on `-h`.
     context_settings={"help_option_names": ["-h", "--help"]},
 )
 
 
+def _print_skill(value: bool) -> None:
+    """Answer the root `--help` with the skill the library composes, leaving `-h` to Typer."""
+    if value:
+        typer.echo(lib.skill())
+        raise typer.Exit()
+
+
 @app.callback()
-def cli() -> None:
+def cli(
+    help: Annotated[
+        bool,
+        typer.Option(
+            "--help", is_eager=True, callback=_print_skill, help="This tool's skill, for an agent driving it."
+        ),
+    ] = False,
+) -> None:
     {{ description_docstring }}
 
 
 @app.command()
 def manifest() -> None:
-    """Print the tool's manifest as JSON."""
+    """Print the tool's manifest as JSON. Deterministic."""
     typer.echo(lib.load_manifest().model_dump_json(indent=2))
 
 

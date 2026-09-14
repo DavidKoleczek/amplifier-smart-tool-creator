@@ -8,6 +8,7 @@ This is a Smart Tool that must conform to Microsoft's [Amplifier Smart Tool Spec
 - The library is the tool. Every capability lives in the library and is reachable from `lib.py`. The CLI and any other surface are thin wrappers: argument parsing and I/O conventions, then a call into the library. Capability that exists only in a wrapper is a defect.
 - Deterministic capabilities run with no model provider configured. Model-backed capabilities go through the `Intelligence` interface, never an SDK directly, and their help text says they are model-backed.
 - Failures name what went wrong and how to fix it. The caller is usually an agent.
+- Once this tool has a remote, declare it in `pyproject.toml` under `[project.urls]` as `Repository = "<url>"`. `--help` then carries it, so an agent that can run the tool but not read its files still finds the docs.
 - Never modify this file unless explictly told.
 
 ## Writing Style

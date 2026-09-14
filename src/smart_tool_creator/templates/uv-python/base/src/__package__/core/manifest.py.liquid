@@ -10,6 +10,6 @@ MANIFEST_PATH = Path(__file__).parents[1] / "SMART_TOOL.md"
 
 
 def load_manifest() -> Manifest:
-    """Parse the frontmatter of the SMART_TOOL.md shipped inside the package."""
-    frontmatter = MANIFEST_PATH.read_text(encoding="utf-8").split("---", 2)[1]
-    return Manifest.model_validate(yaml.safe_load(frontmatter))
+    """Parse the frontmatter and body of the SMART_TOOL.md shipped inside the package."""
+    _, frontmatter, body = MANIFEST_PATH.read_text(encoding="utf-8").split("---", 2)
+    return Manifest.model_validate({**yaml.safe_load(frontmatter), "body": body.strip()})

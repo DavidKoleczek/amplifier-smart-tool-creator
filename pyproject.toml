@@ -19,6 +19,9 @@ dependencies = [
 [project.scripts]
 smart-tool-creator = "smart_tool_creator.cli:main"
 
+[project.urls]
+Repository = "https://github.com/DavidKoleczek/amplifier-smart-tool-creator"
+
 [build-system]
 requires = ["uv_build>=0.12.5,<0.13.0"]
 build-backend = "uv_build"

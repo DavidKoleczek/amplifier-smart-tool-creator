@@ -11,18 +11,34 @@ from smart_tool_creator.schemas import IntelligenceLayer, Language, SmartToolCre
 app = typer.Typer(
     no_args_is_help=True,
     pretty_exceptions_show_locals=False,
+    # Every command answers both flags. The root callback claims `--help` for the skill below, and Click drops a
+    # help option name already taken by a parameter, which leaves the root's generated summary on `-h`.
     context_settings={"help_option_names": ["-h", "--help"]},
 )
 
 
+def _print_skill(value: bool) -> None:
+    """Answer the root `--help` with the skill the library composes, leaving `-h` to Typer."""
+    if value:
+        typer.echo(lib.skill())
+        raise typer.Exit()
+
+
 @app.callback()
-def cli() -> None:
+def cli(
+    help: Annotated[
+        bool,
+        typer.Option(
+            "--help", is_eager=True, callback=_print_skill, help="This tool's skill, for an agent driving it."
+        ),
+    ] = False,
+) -> None:
     """Create, validate, and evaluate smart tools."""
 
 
 @app.command()
 def manifest() -> None:
-    """Print the tool's manifest as JSON."""
+    """Print the tool's manifest as JSON. Deterministic."""
     typer.echo(lib.load_manifest().model_dump_json(indent=2))
 
 
@@ -55,8 +71,10 @@ def init(
     )
     lines = [
         f"Scaffolded {name} at {scaffold.root}",
-        f"  {len(scaffold.files)} files written as a {language} tool with {intelligence} intelligence, "
-        "committed to a new git repository with no remote",
+        (
+            f"  {len(scaffold.files)} files written as a {language} tool with {intelligence} intelligence, "
+            "committed to a new git repository with no remote"
+        ),
         f"  environment synced: `uv run {name} manifest` works from that directory",
     ]
     if skill:

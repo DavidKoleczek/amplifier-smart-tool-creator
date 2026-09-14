@@ -23,10 +23,32 @@ Another implementation is a module satisfying the protocol and a branch in that 
 
 ## Manifest
 
-The tool's `SMART_TOOL.md` frontmatter as structured data.
+The tool's `SMART_TOOL.md` as structured data: the frontmatter as fields, the Markdown below it as `Manifest.body`.
 
 ```python
 def load_manifest() -> Manifest
+```
+
+## Skill
+
+What an agent reads once it has decided to drive the tool: the manifest body and the capability list, wrapped so the reader knows where the tool's files are. 
+The CLI's `--help` prints exactly this.
+
+```python
+def skill() -> str
+```
+
+The installed package root, resolved at runtime, where the files the skill names can be read.
+
+```python
+def skill_directory() -> Path
+```
+
+The tool's canonical source, read from the package metadata's `[project.urls]` `Repository` entry, or `None` when the package declares none. 
+The skill carries it so a caller that can run the tool but not read its files still reaches the documentation.
+
+```python
+def repository_url() -> str | None
 ```
 
 ## Init
