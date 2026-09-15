@@ -32,6 +32,13 @@ To teach a coding agent how to use it, install the [skill](skills/smart-tool-cre
 npx skills add DavidKoleczek/amplifier-smart-tool-creator
 ```
 
+To uninstall:
+
+```bash
+uv tool uninstall amplifier-smart-tool-creator
+npx skills remove smart-tool-creator   # add --global if the skill was installed globally
+```
+
 ## Interface
 
 ```bash
