@@ -7,7 +7,7 @@ The intelligence inside is implemented with the [GitHub Copilot SDK](https://git
 ## Installation
 
 Prerequisites:
-- Requires [uv](https://docs.astral.sh/uv/getting-started/installation/).
+- Requires [uv](https://docs.astral.sh/uv/getting-started/installation/) 0.9.17 or newer.
 - [GitHub CLI](https://cli.github.com/) signed in to an account with a [GitHub Copilot subscription](https://github.com/github/copilot-cli#prerequisites) for the intelligent features.
 
 ```bash
