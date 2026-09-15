@@ -6,11 +6,9 @@
 
 **Proposed Smart Tool name:** `loop-artifact-studio`
 
-**Relationship to the earlier design:** This document replaces the proposed
-agent-facing surface and persistence architecture in
-[`loop-artifact-studio-design.md`](loop-artifact-studio-design.md). The earlier
-document remains useful as feasibility research, workflow analysis, and
-evaluation planning.
+**Document scope:** This is a standalone proposed design for the agent-facing
+surface, internal orchestration, and persistence architecture of Loop Artifact
+Studio.
 
 ## 1. Summary
 
