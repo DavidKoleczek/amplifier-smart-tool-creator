@@ -4,7 +4,7 @@ from typer.testing import CliRunner
 from {{ package }}.cli import app
 from {{ package }}.core import skill as skill_module
 from {{ package }}.core.skill import CAPABILITIES
-from {{ package }}.lib import load_manifest, skill, skill_directory
+from {{ package }}.lib import load_manifest, skill, skill_directory, skill_resources
 
 RELATIVE_PATHS_LINE = "Relative paths in this skill are relative to the skill directory."
 
@@ -52,6 +52,7 @@ def test_skill_resources_resolve_under_the_skill_directory() -> None:
     resources = [line.removeprefix("<file>").removesuffix("</file>") for line in _resource_lines(skill())]
 
     assert resources
+    assert resources == skill_resources()
     assert (root / "SMART_TOOL.md").is_file()
     for resource in resources:
         assert (root / resource).is_file()

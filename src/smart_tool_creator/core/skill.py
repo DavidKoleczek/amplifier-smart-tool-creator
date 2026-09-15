@@ -37,7 +37,7 @@ def repository_url() -> str | None:
 
 
 def skill_resources() -> list[str]:
-    """The files worth opening, as paths relative to the skill directory."""
+    """The files the skill lists, as paths relative to the skill directory."""
     root = skill_directory()
     missing = [path for path in SKILL_RESOURCES if not (root / path).is_file()]
     if missing:

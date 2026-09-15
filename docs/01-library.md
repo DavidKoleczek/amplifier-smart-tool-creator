@@ -44,6 +44,12 @@ The installed package root, resolved at runtime, where the files the skill names
 def skill_directory() -> Path
 ```
 
+The files the skill lists under `<skill_resources>`, as paths relative to `skill_directory()`. Every one ships inside the package, so each resolves after installation.
+
+```python
+def skill_resources() -> list[str]
+```
+
 The tool's canonical source, read from the package metadata's `[project.urls]` `Repository` entry, or `None` when the package declares none. 
 The skill carries it so a caller that can run the tool but not read its files still reaches the documentation.
 

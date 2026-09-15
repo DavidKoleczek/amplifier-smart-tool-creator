@@ -22,6 +22,11 @@ def skill_directory() -> Path:
     return skill_module.skill_directory()
 
 
+def skill_resources() -> list[str]:
+    """The files the skill lists, as paths relative to the skill directory. Every one ships inside the package."""
+    return skill_module.skill_resources()
+
+
 def repository_url() -> str | None:
     """The tool's canonical source, from the package metadata, or None when the package declares none."""
     return skill_module.repository_url()

@@ -5,7 +5,7 @@ from typer.testing import CliRunner
 
 from smart_tool_creator.cli import app
 from smart_tool_creator.core.skill import CAPABILITIES
-from smart_tool_creator.lib import load_manifest, repository_url, skill, skill_directory
+from smart_tool_creator.lib import load_manifest, repository_url, skill, skill_directory, skill_resources
 
 DISTRIBUTION_ROOT = Path(__file__).parents[1]
 
@@ -47,6 +47,7 @@ def test_skill_resources_resolve_under_the_skill_directory() -> None:
     resources = [line.removeprefix("<file>").removesuffix("</file>") for line in _resource_lines(skill())]
 
     assert resources
+    assert resources == skill_resources()
     assert (root / "SMART_TOOL.md").is_file()
     for resource in resources:
         assert (root / resource).is_file()
