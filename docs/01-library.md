@@ -86,7 +86,8 @@ The model-backed capabilities sit behind an `Intelligence` interface so the SDK 
 A `reference/` directory holds shallow, gitignored clones of the repositories an agent developing the tool should read rather than recall: the [spec](https://github.com/microsoft/amplifier-smart-tools), the chosen SDK, and the [Agent Skills spec](https://github.com/agentskills/agentskills) when `skill` is set. 
 `AGENTS.md` lists them and the development setup script restores any that are missing, so a fresh clone of the tool recovers them.
 
-Returns the created root, the files written under it, and the repositories cloned into `reference/`. 
+Returns the created root, the files written under it, the repositories cloned into `reference/`, and an `output_message`: what was created and what to do next in the new tool, for the calling agent, rendered from `capabilities/init/output_message.md.liquid`. 
+The next steps start with `docs/00-vision.md` and `docs/01-library.md` because they set the stage for everything implemented afterwards; any surface that scaffolds a tool should pass the message on to its caller. 
 Raises `SmartToolCreatorError` when `name` is not a slug, `directory` is not empty, `git` or `uv` is not on `PATH`, or a reference cannot be cloned.
 
 ### Languages
@@ -133,8 +134,10 @@ class AddedCapability(BaseModel):
     report: str
     checks: list[Check]
     fix_rounds: int
+    output_message: str
 ```
 
-`report` is the agent's final message: the capability's name, the files it touched, the command to try it, and its caveats. Nothing is committed and the working tree is not required to be clean; git stays the caller's.
+`report` is the agent's final message: the capability's name, the files it touched, the command to try it, and its caveats. 
+`output_message` is the whole result for the calling agent, rendered from `capabilities/add_smart_capability/output_message.md.liquid`: the report, one line per check, the next steps, and the checks still failing when there are any. Nothing is committed and the working tree is not required to be clean; git stays the caller's.
 
 Raises `SmartToolCreatorError` when `directory` holds no `smart-tool.json`, `request` is empty, `uv` is not on `PATH`, the intelligence preflight fails, or the agent itself fails. An agent failure may leave partial edits in the tool's working tree, and the message says so.

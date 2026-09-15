@@ -19,6 +19,7 @@ NAME = "release-notes"
 DESCRIPTION = "Summarizes changelogs into release notes"
 REQUEST = "Summarize a changelog into release notes grouped by audience"
 REPORT = "Added the summarize capability."
+OUTPUT_MESSAGE = "The message the library rendered."
 SESSION = "fake-session"
 FAILING_TEST = Path("tests") / "test_temporarily_failing.py"
 PLANTED_IMPORT = "import module_that_does_not_exist\n"
@@ -148,6 +149,11 @@ def test_a_scaffolded_tool_left_untouched_passes_every_check(tool: Path) -> None
     assert len(fake.requests) == 1
     assert [check.name for check in added.checks] == ["pytest", "prek", "conformance"]
     assert [check.status for check in added.checks] == ["passed"] * 3, added.checks
+    assert added.output_message.startswith(added.report)
+    assert "pytest passed" in added.output_message
+    assert "Next:" in added.output_message
+    assert "docs/00-vision.md" in added.output_message
+    assert "Still failing" not in added.output_message
 
 
 def test_prek_is_skipped_when_it_is_not_installed(tool: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -162,6 +168,7 @@ def test_prek_is_skipped_when_it_is_not_installed(tool: Path, monkeypatch: pytes
     assert prek.status == "skipped"
     assert "prek" in prek.output
     assert [check.status for check in added.checks] == ["passed", "skipped", "passed"], added.checks
+    assert f"prek skipped: {prek.output}" in added.output_message
     assert added.fix_rounds == 0
     assert len(fake.requests) == 1
 
@@ -205,6 +212,8 @@ def test_checks_still_failing_after_the_cap_are_returned_rather_than_raised(desc
     assert len(fake.requests) == MAX_FIX_ROUNDS + 1
     assert [check.name for check in added.checks if check.status == "failed"]
     assert added.report == f"{REPORT} Run {MAX_FIX_ROUNDS + 1}."
+    assert f"Still failing after {MAX_FIX_ROUNDS} fix rounds" in added.output_message
+    assert str(descriptor_only.resolve()) in added.output_message
 
 
 def test_an_agent_failure_names_the_error_and_the_working_tree(descriptor_only: Path) -> None:
@@ -219,44 +228,36 @@ def test_an_agent_failure_names_the_error_and_the_working_tree(descriptor_only: 
     assert str(descriptor_only.resolve()) in message
 
 
-def test_the_cli_prints_every_check_and_exits_zero_when_none_failed(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_the_cli_prints_the_output_message_and_exits_zero_when_no_check_failed(monkeypatch: pytest.MonkeyPatch) -> None:
     added = AddedCapability(
         root=Path("/tmp/release-notes"),
         report=REPORT,
-        checks=[
-            Check(name="pytest", command=["uv", "run", "pytest"], status="passed", output=""),
-            Check(
-                name="prek", command=["prek", "run", "--all-files"], status="skipped", output="'prek' is not on PATH"
-            ),
-        ],
+        checks=[Check(name="pytest", command=["uv", "run", "pytest"], status="passed", output="")],
         fix_rounds=0,
+        output_message=OUTPUT_MESSAGE,
     )
     monkeypatch.setattr("smart_tool_creator.lib.add_smart_capability", lambda *arguments, **keywords: added)
 
     result = runner.invoke(app, ["add-smart-capability", REQUEST])
 
     assert result.exit_code == 0
-    assert REPORT in result.stdout
-    assert "pytest passed" in result.stdout
-    assert "prek skipped: 'prek' is not on PATH" in result.stdout
-    assert "Next:" in result.stdout
+    assert result.stdout == f"{OUTPUT_MESSAGE}\n"
 
 
-def test_the_cli_exits_one_and_names_the_checks_that_are_still_failing(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_the_cli_exits_one_when_a_check_is_still_failing(monkeypatch: pytest.MonkeyPatch) -> None:
     added = AddedCapability(
         root=Path("/tmp/release-notes"),
         report=REPORT,
         checks=[Check(name="pytest", command=["uv", "run", "pytest"], status="failed", output="1 failed")],
         fix_rounds=MAX_FIX_ROUNDS,
+        output_message=OUTPUT_MESSAGE,
     )
     monkeypatch.setattr("smart_tool_creator.lib.add_smart_capability", lambda *arguments, **keywords: added)
 
     result = runner.invoke(app, ["add-smart-capability", REQUEST])
 
     assert result.exit_code == 1
-    assert "pytest failed" in result.stdout
-    assert "pytest" in result.stderr
-    assert "Still failing" in result.stderr
+    assert result.stdout == f"{OUTPUT_MESSAGE}\n"
 
 
 @pytest.mark.skipif(

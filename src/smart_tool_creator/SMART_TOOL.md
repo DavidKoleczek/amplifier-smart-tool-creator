@@ -105,7 +105,7 @@ scaffold = init(
     "Writes, reviews, and tracks blameless postmortems from your incident platform's records",
     skill=True,
 )
-scaffold.root, scaffold.files, scaffold.references
+scaffold.root, scaffold.files, scaffold.references, scaffold.output_message
 ```
 
 Pick a slug name (lowercase, digits, hyphens) and a one-sentence description that says what
@@ -114,9 +114,12 @@ the tool is for; both land in the manifest. `--directory` chooses where it goes,
 `skills/<name>/SKILL.md`. Language and intelligence layer default to `uv-python` and
 `copilot-sdk`.
 
-Afterwards, work inside the new repository: read its `AGENTS.md` first, add domain
-capabilities to its library, and run the conformance kit as its `CONTRIBUTING.md` describes.
-Adding a remote and pushing is the user's call.
+Afterwards, work inside the new repository, following the next steps in the result's `output_message`:
+read its `AGENTS.md`, fill in `docs/00-vision.md` and, if the surface is already clear,
+`docs/01-library.md`, then add domain capabilities to its library and run the conformance
+kit as its `CONTRIBUTING.md` describes. The docs come first because they set the stage for
+everything implemented; keep them concise and written for people. Adding a remote and
+pushing is the user's call.
 
 ## Adding a smart capability
 
@@ -148,7 +151,7 @@ added = add_smart_capability(
         "Our postmortem template is at ~/notes/postmortem-template.md; match its headings",
     ],
 )
-added.report, added.checks, added.fix_rounds
+added.report, added.checks, added.fix_rounds, added.output_message
 ```
 
 The request is the whole brief: what the capability does, for whom, and what it takes in and
@@ -158,8 +161,9 @@ text, usually paths to notes, transcripts, or exemplars the agent should read be
 designs anything; it reads them itself, so name them rather than pasting them. `--model` and
 `--reasoning-effort` pick the agent behind it.
 
-The result carries the agent's report, one entry per check, and how many extra rounds were
-spent fixing them. A check still failing when the work stops is reported as such and exits 1.
+The result carries the agent's report, one entry per check, how many extra rounds were spent
+fixing them, and an `output_message` carrying all of it for the calling agent, which is what the
+CLI prints. A check still failing when the work stops is named in the message and exits 1.
 
 ## Output and failure contract
 
