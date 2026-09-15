@@ -25,6 +25,7 @@ SHIPPED_ALONGSIDE = [
     "docs/01-library.md",
     "docs/02-cli.md",
     "setup-for-dev.py",
+    "src/release_notes/capabilities/__init__.py",
     "src/release_notes/core/skill.py",
     "src/release_notes/intelligence/interface.py",
     "src/release_notes/intelligence/copilot.py",

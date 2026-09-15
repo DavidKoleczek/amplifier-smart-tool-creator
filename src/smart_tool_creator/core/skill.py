@@ -16,6 +16,11 @@ CAPABILITIES = (
         "Scaffold a new smart tool: a git repository holding a spec-conforming tool that passes the conformance kit.",
         model_backed=False,
     ),
+    Capability(
+        "add-smart-capability",
+        "Add one model-backed capability to an existing smart tool, verified against that tool's own checks.",
+        model_backed=True,
+    ),
 )
 
 # Paths relative to the skill directory. Both ship inside the package, so both resolve after installation.

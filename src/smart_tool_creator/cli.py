@@ -6,7 +6,13 @@ from typing import Annotated
 import typer
 
 from smart_tool_creator import lib
-from smart_tool_creator.schemas import IntelligenceLayer, Language, SmartToolCreatorError
+from smart_tool_creator.schemas import (
+    DEFAULT_INTELLIGENCE_MODEL,
+    IntelligenceLayer,
+    Language,
+    ReasoningEffort,
+    SmartToolCreatorError,
+)
 
 app = typer.Typer(
     no_args_is_help=True,
@@ -86,13 +92,61 @@ def init(
             "Next:",
             f"  cd {scaffold.root}",
             "  read AGENTS.md, then fill in the Goals and Non-Goals in docs/00-vision.md",
-            f"  add the first capability to src/{name.replace('-', '_')}/lib.py and expose it in cli.py",
+            f"  add the first capability under src/{name.replace('-', '_')}/capabilities/<name>/, then expose it from lib.py and cli.py",
             "  document it in docs/01-library.md and docs/02-cli.md, and add its worked invocation to SMART_TOOL.md",
             "  run `prek run --all-files`, `uv run pytest`, and the conformance kit as CONTRIBUTING.md describes",
             "  add a remote and push when ready",
         ]
     )
     typer.echo("\n".join(lines))
+
+
+@app.command()
+def add_smart_capability(
+    request: Annotated[
+        str, typer.Argument(help="What the capability does, for whom, and what it takes in and gives back.")
+    ],
+    directory: Annotated[
+        Path | None, typer.Option("--directory", help="The smart tool to work in; the current directory when omitted.")
+    ] = None,
+    context: Annotated[
+        list[str] | None,
+        typer.Option("--context", help="Repeatable; text, or paths the agent should read before it designs anything."),
+    ] = None,
+    model: Annotated[str, typer.Option("--model", help="The model the agent runs on.")] = DEFAULT_INTELLIGENCE_MODEL,
+    reasoning_effort: Annotated[
+        ReasoningEffort, typer.Option("--reasoning-effort", help="How hard the model thinks before it acts.")
+    ] = "low",
+) -> None:
+    """Add one model-backed capability to an existing smart tool: library, CLI, tests, and docs, verified against the tool's own checks. Model-backed: runs through GitHub Copilot, signed in as the GitHub CLI's user."""
+    added = lib.add_smart_capability(
+        request,
+        directory=directory,
+        context=context,
+        model=model,
+        reasoning_effort=reasoning_effort,
+    )
+    lines = [added.report, "", f"Checks in {added.root}:"]
+    for check in added.checks:
+        reason = f": {check.output}" if check.status == "skipped" else ""
+        lines.append(f"  {check.name} {check.status}{reason}")
+    lines.extend(
+        [
+            "Next:",
+            "  try the command the report names",
+            "  run the tool's own checks as its CONTRIBUTING.md describes",
+            "  commit and push it if it looks right",
+        ]
+    )
+    typer.echo("\n".join(lines))
+    failing = [check.name for check in added.checks if check.status == "failed"]
+    if failing:
+        typer.echo(
+            f"Still failing after {added.fix_rounds} fix rounds: {', '.join(failing)}. "
+            f"The capability is in the working tree at {added.root}; fix the checks or discard the changes.",
+            err=True,
+        )
+        raise typer.Exit(1)
 
 
 def main() -> int:

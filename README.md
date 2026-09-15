@@ -20,12 +20,6 @@ To use it as a library:
 uv add "amplifier-smart-tool-creator @ git+https://github.com/DavidKoleczek/amplifier-smart-tool-creator"
 ```
 
-To upgrade to the latest:
-
-```bash
-uv tool upgrade amplifier-smart-tool-creator
-```
-
 To run it once without installing:
 
 ```bash
@@ -36,6 +30,13 @@ To teach a coding agent how to use it, install the [skill](skills/smart-tool-cre
 
 ```bash
 npx skills add DavidKoleczek/amplifier-smart-tool-creator
+```
+
+To update:
+
+```bash
+uv tool upgrade amplifier-smart-tool-creator
+npx skills update smart-tool-creator   # add --global if the skill was installed globally
 ```
 
 To uninstall:
@@ -51,8 +52,11 @@ npx skills remove smart-tool-creator   # add --global if the skill was installed
 # Print the tool's manifest as JSON
 smart-tool-creator manifest
 
-# Scaffold a new smart tool into ./release-notes, optionally with an Agent Skill. Specify a specific directory with --directory
-smart-tool-creator init release-notes --description "Summarizes changelogs into release notes" --skill
+# Scaffold a new smart tool into ./incident-postmortem, optionally with an Agent Skill. Specify a specific directory with --directory
+smart-tool-creator init incident-postmortem --description "Writes, reviews, and tracks blameless postmortems from your incident platform's records" --skill
+
+# Add one model-backed capability to an existing smart tool, verified against that tool's own checks
+smart-tool-creator add-smart-capability "Given an incident id, fetch its chat transcript and alert timeline from the incident platform and draft a blameless postmortem: summary, impact, contributing factors, and action items with owners" --directory ./incident-postmortem
 ```
 
 See the [CLI reference](docs/02-cli.md) for every flag and the [library reference](docs/01-library.md) for the Python surface.

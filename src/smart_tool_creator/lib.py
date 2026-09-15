@@ -2,9 +2,20 @@
 
 from pathlib import Path
 
-from smart_tool_creator.core import manifest, scaffold
+from smart_tool_creator.capabilities.add_smart_capability import capability
+from smart_tool_creator.capabilities.init import scaffold
+from smart_tool_creator.core import manifest
 from smart_tool_creator.core import skill as skill_module
-from smart_tool_creator.schemas import IntelligenceLayer, Language, Manifest, Scaffold
+from smart_tool_creator.intelligence.interface import Intelligence
+from smart_tool_creator.schemas import (
+    DEFAULT_INTELLIGENCE_MODEL,
+    AddedCapability,
+    IntelligenceLayer,
+    Language,
+    Manifest,
+    ReasoningEffort,
+    Scaffold,
+)
 
 
 def load_manifest() -> Manifest:
@@ -48,4 +59,23 @@ def init(
         language=language,
         intelligence=intelligence,
         skill=skill,
+    )
+
+
+def add_smart_capability(
+    request: str,
+    directory: Path | None = None,
+    context: list[str] | None = None,
+    model: str = DEFAULT_INTELLIGENCE_MODEL,
+    reasoning_effort: ReasoningEffort = "low",
+    intelligence: Intelligence | None = None,
+) -> AddedCapability:
+    """Add one model-backed capability to an existing smart tool, then hold it to that tool's own checks."""
+    return capability.add_smart_capability(
+        request,
+        directory=directory,
+        context=context,
+        model=model,
+        reasoning_effort=reasoning_effort,
+        intelligence=intelligence,
     )

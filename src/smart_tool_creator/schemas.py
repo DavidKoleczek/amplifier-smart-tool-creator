@@ -4,6 +4,7 @@ from typing import Literal, NamedTuple
 from pydantic import BaseModel, Field
 
 DEFAULT_INTELLIGENCE_MODEL = "gpt-6-astra"
+ReasoningEffort = Literal["low", "medium", "high", "xhigh", "max"]
 
 SEMVER_PATTERN = r"^\d+\.\d+\.\d+$"
 SLUG_PATTERN = r"^[a-z0-9]+(-[a-z0-9]+)*$"
@@ -65,6 +66,31 @@ class Scaffold(BaseModel):
     root: Path = Field(description="The new tool's distribution root")
     files: list[Path] = Field(description="Every file written, relative to the root")
     references: list[str] = Field(description="The repositories cloned into reference/")
+
+
+# endregion
+
+# region: Add smart capability
+
+
+class Check(BaseModel):
+    """One of the extended tool's own checks, as it stood after the agent finished."""
+
+    name: str
+    command: list[str]
+    status: Literal["passed", "failed", "skipped"]
+    output: str = Field(
+        description="The tail of the combined output when it failed, the reason when it was skipped, empty when it passed"
+    )
+
+
+class AddedCapability(BaseModel):
+    """What add_smart_capability produced."""
+
+    root: Path = Field(description="The extended tool's distribution root")
+    report: str = Field(description="The agent's final message: what it added, how to try it, caveats")
+    checks: list[Check] = Field(description="The tool's own checks, run after the work finished")
+    fix_rounds: int = Field(description="Extra agent runs spent on failing checks")
 
 
 # endregion

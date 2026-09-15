@@ -16,7 +16,8 @@ class Intelligence(Protocol):
 ```
 
 `preflight` raises `SmartToolCreatorError` naming what to configure when the implementation cannot run. 
-`run` executes one agent: `AgentRequest` holds the prompt, model, optional workspace, and optional output schema; `AgentResult` holds the text, structured output, or error.
+`run` executes one agent: `AgentRequest` holds the prompt, model, optional workspace, and optional output schema; `AgentResult` holds the text, structured output, or error. 
+Setting `AgentRequest.resume` to an earlier `AgentResult.session_id` continues that session instead of starting a fresh one, so the agent keeps what it learned.
 
 `default_intelligence()` returns the shipped implementation, `CopilotIntelligence`, built on the [GitHub Copilot SDK](https://github.com/github/copilot-sdk) and signed in through the GitHub CLI. 
 Another implementation is a module satisfying the protocol and a branch in that factory.
@@ -95,3 +96,45 @@ Raises `SmartToolCreatorError` when `name` is not a slug, `directory` is not emp
 ### Intelligence layers
 
 - `copilot-sdk`: the [GitHub Copilot SDK](https://github.com/github/copilot-sdk), signed in through the GitHub CLI.
+
+## Add smart capability
+
+Adds one model-backed capability to a smart tool that already exists. An agent works inside the tool's own repository: it reads the tool, implements the capability in the library, exposes it from the CLI, writes the tests and the documentation, then runs the tool's own checks and fixes what they report. Model-backed.
+
+```python
+def add_smart_capability(
+    request: str,
+    directory: Path | None = None,
+    context: list[str] | None = None,
+    model: str = DEFAULT_INTELLIGENCE_MODEL,
+    reasoning_effort: ReasoningEffort = "low",
+    intelligence: Intelligence | None = None,
+) -> AddedCapability
+```
+
+- `request`: the whole brief for one capability: what it does, for whom, and what it takes in and gives back.
+- `directory`: the tool to work in; the current directory when omitted. It must hold a `smart-tool.json` at its root, and no parent directory is searched, so a workspace holding several tools can never be extended by accident.
+- `context`: repeatable free text, usually paths to notes, transcripts, or exemplars. The agent reads the paths itself, so name them rather than pasting their contents.
+- `model` and `reasoning_effort`: the agent behind the work. Effort is one of `low`, `medium`, `high`, `xhigh`, `max`.
+- `intelligence`: the implementation to run through; `default_intelligence()` when omitted. Tests inject a fake.
+
+After the agent finishes, the tool's own checks run in its root: `uv run pytest`, `prek run --all-files`, and the conformance kit. The prek check is `skipped`, never failed, when the tool has no `.pre-commit-config.yaml` or `prek` is not on `PATH`. While any check fails, another agent run gets the failing commands and their output and fixes them, up to `MAX_FIX_ROUNDS` (2). Each fix round continues the implementation run's session, so the agent still has the work it just did in context. Checks still failing after that are returned, not raised: the caller decides what the partial work is worth.
+
+```python
+class Check(BaseModel):
+    name: str
+    command: list[str]
+    status: Literal["passed", "failed", "skipped"]
+    output: str
+
+
+class AddedCapability(BaseModel):
+    root: Path
+    report: str
+    checks: list[Check]
+    fix_rounds: int
+```
+
+`report` is the agent's final message: the capability's name, the files it touched, the command to try it, and its caveats. Nothing is committed and the working tree is not required to be clean; git stays the caller's.
+
+Raises `SmartToolCreatorError` when `directory` holds no `smart-tool.json`, `request` is empty, `uv` is not on `PATH`, the intelligence preflight fails, or the agent itself fails. An agent failure may leave partial edits in the tool's working tree, and the message says so.

@@ -84,9 +84,15 @@ class CopilotIntelligence:
             ]
             session_options["available_tools"] = [*session_options["available_tools"], SUBMIT_TOOL]
         deadline = time.monotonic() + request.timeout_seconds
+        # Carried out of the try so the failure paths can name the session the caller could resume.
+        session_id: str | None = None
         try:
             await client.start()
-            session = await client.create_session(**session_options)
+            if request.resume is not None:
+                session = await client.resume_session(request.resume, **session_options)
+            else:
+                session = await client.create_session(**session_options)
+            session_id = session.session_id
             prompt = request.prompt
             invalid = 0
             while True:
@@ -97,15 +103,22 @@ class CopilotIntelligence:
                     event = await session.send_and_wait(prompt, timeout=remaining)
                 except TimeoutError:
                     await session.abort()
-                    return AgentResult(error=f"The agent did not finish within {request.timeout_seconds} seconds.")
+                    return AgentResult(
+                        error=f"The agent did not finish within {request.timeout_seconds} seconds.",
+                        session_id=session_id,
+                    )
                 text = str(getattr(event.data, "content", "") or "") if event is not None else ""
                 if request.output_schema is None:
-                    return AgentResult(text=text)
+                    return AgentResult(text=text, session_id=session_id)
                 problem = _submission_problem(submitted, request.output_schema)
                 if problem is None:
-                    return AgentResult(output=submitted, text=text)
+                    return AgentResult(output=submitted, text=text, session_id=session_id)
                 if invalid >= MAX_INVALID_SUBMISSIONS:
-                    return AgentResult(text=text, error=f"No valid submission after {invalid} retries: {problem}")
+                    return AgentResult(
+                        text=text,
+                        error=f"No valid submission after {invalid} retries: {problem}",
+                        session_id=session_id,
+                    )
                 invalid += 1
                 submitted = None
                 prompt = (
@@ -113,9 +126,11 @@ class CopilotIntelligence:
                     f"Call the {SUBMIT_TOOL} tool now with an answer matching its schema."
                 )
         except TimeoutError:
-            return AgentResult(error=f"The agent did not finish within {request.timeout_seconds} seconds.")
+            return AgentResult(
+                error=f"The agent did not finish within {request.timeout_seconds} seconds.", session_id=session_id
+            )
         except Exception as error:  # an SDK or runtime failure is the caller's data, not a crash
-            return AgentResult(error=f"{type(error).__name__}: {error}")
+            return AgentResult(error=f"{type(error).__name__}: {error}", session_id=session_id)
         finally:
             with contextlib.suppress(Exception):
                 await client.stop()
