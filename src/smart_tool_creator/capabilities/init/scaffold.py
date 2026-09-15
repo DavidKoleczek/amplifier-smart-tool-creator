@@ -12,6 +12,7 @@ from liquid import Environment, StrictUndefined
 from smart_tool_creator.schemas import SLUG_PATTERN, IntelligenceLayer, Language, Scaffold, SmartToolCreatorError
 
 TEMPLATES_ROOT = Path(__file__).parent / "templates"
+OUTPUT_MESSAGE_PATH = Path(__file__).parent / "output_message.md.liquid"
 TEMPLATE_SUFFIX = ".liquid"
 PACKAGE_SEGMENT = "__package__"
 NAME_SEGMENT = "__name__"
@@ -63,7 +64,15 @@ def init(
         )
     _git(["add", "-A"], root, "Could not stage the new tool")
     _git(["commit", "-m", f"Scaffold {name} with smart-tool-creator"], root, "Could not commit the new tool")
-    return Scaffold(root=root, files=files, references=references)
+    output_message = ENVIRONMENT.render(
+        OUTPUT_MESSAGE_PATH.read_text(encoding="utf-8"),
+        root=str(root),
+        files=[str(file) for file in files],
+        language=language,
+        intelligence=intelligence,
+        **variables,
+    ).rstrip()
+    return Scaffold(root=root, files=files, references=references, output_message=output_message)
 
 
 def reference_repositories(intelligence: IntelligenceLayer, skill: bool) -> list[str]:

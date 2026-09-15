@@ -30,7 +30,7 @@ smart-tool-creator init NAME --description TEXT [--directory PATH] [--language u
 ```
 
 `lib.init(name, description, ...)` with `NAME` positional and every other argument an option of the same name. 
-Prints where the tool landed, what was written and committed, the repositories cloned into `reference/`, and the next steps.
+Prints the result's `output_message`: where the tool landed, what was written and committed, the repositories cloned into `reference/`, and the next steps.
 
 ## smart-tool-creator add-smart-capability
 
@@ -39,5 +39,5 @@ smart-tool-creator add-smart-capability REQUEST [--directory PATH] [--context TE
 ```
 
 `lib.add_smart_capability(request, ...)` with `REQUEST` positional and `--context` repeated once per entry. 
-Prints the agent's report, one line per check with its status (a skipped check names why on the same line), and the next steps. 
-When a check is still failing after the fix rounds, a stderr line names it and the exit code is 1; the work stays in the tool's working tree either way.
+Prints the result's `output_message`: the agent's report, one line per check with its status (a skipped check names why on the same line), the next steps, and any check still failing after the fix rounds. 
+When one is, the exit code is 1; the work stays in the tool's working tree either way.

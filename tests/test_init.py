@@ -71,6 +71,16 @@ def test_init_produces_a_conforming_committed_tool(tmp_path: Path) -> None:
     )
     assert "amplifier-smart-tools" in {url.rsplit("/", 1)[-1] for url in result.references}
 
+    assert f"Scaffolded {NAME} at {root}" in result.output_message
+    assert f"{len(result.files)} files written" in result.output_message
+    assert all(url in result.output_message for url in result.references)
+    next_steps = result.output_message.split("Next:", 1)[1]
+    assert (
+        next_steps.index("docs/00-vision.md")
+        < next_steps.index("docs/01-library.md")
+        < next_steps.index("capabilities/")
+    )
+
     invoked = run(["uv", "run", NAME, "manifest"], root)
     assert invoked.returncode == 0, invoked.stderr
     manifest = json.loads(invoked.stdout)

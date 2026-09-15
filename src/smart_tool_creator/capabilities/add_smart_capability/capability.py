@@ -19,6 +19,7 @@ from smart_tool_creator.schemas import (
 
 PROMPT_PATH = Path(__file__).parent / "add_smart_capability.md.liquid"
 FIX_CHECKS_PROMPT_PATH = Path(__file__).parent / "fix_checks.md.liquid"
+OUTPUT_MESSAGE_PATH = Path(__file__).parent / "output_message.md.liquid"
 
 DESCRIPTOR = "smart-tool.json"
 PRE_COMMIT_CONFIG = ".pre-commit-config.yaml"
@@ -64,7 +65,17 @@ def add_smart_capability(
         result = _agent(intelligence, prompt, root, model, reasoning_effort, resume=result.session_id)
         checks = _checks(root)
         fix_rounds += 1
-    return AddedCapability(root=root, report=result.text, checks=checks, fix_rounds=fix_rounds)
+    output_message = _render(
+        OUTPUT_MESSAGE_PATH,
+        root=str(root),
+        report=result.text,
+        checks=[check.model_dump() for check in checks],
+        fix_rounds=fix_rounds,
+        failing=[check.name for check in _failed(checks)],
+    ).rstrip()
+    return AddedCapability(
+        root=root, report=result.text, checks=checks, fix_rounds=fix_rounds, output_message=output_message
+    )
 
 
 def _preflight(request: str, root: Path, intelligence: Intelligence) -> None:

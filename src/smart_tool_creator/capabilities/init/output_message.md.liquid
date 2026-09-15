@@ -1,0 +1,22 @@
+Scaffolded {{ name }} at {{ root }}
+  {{ files | size }} files written as a {{ language }} tool with {{ intelligence }} intelligence, committed to a new git repository with no remote
+  environment synced: `uv run {{ name }} manifest` works from that directory
+{%- if skill %}
+  Agent Skill at skills/{{ name }}/SKILL.md
+{%- endif %}
+  reference/ holds shallow clones of:
+{%- for reference in references %}
+    {{ reference }}
+{%- endfor %}
+
+Next:
+  cd {{ root }}
+  read AGENTS.md
+  fill in docs/00-vision.md: goals, non-goals, and what the tool leaves to others.
+    Recommended before any code: it sets the stage for everything implemented and is what the tool is held to.
+  if you already know the surface, sketch it in docs/01-library.md: each capability, its signature, and what it returns.
+    Both docs are for people; keep them concise and readable.
+  add the first capability under src/{{ package }}/capabilities/<name>/, then expose it from lib.py and cli.py
+  document it in docs/01-library.md and docs/02-cli.md, and add its worked invocation to SMART_TOOL.md
+  run `prek run --all-files`, `uv run pytest`, and the conformance kit as CONTRIBUTING.md describes
+  add a remote and push when ready

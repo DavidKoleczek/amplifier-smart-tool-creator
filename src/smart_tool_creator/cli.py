@@ -75,30 +75,7 @@ def init(
         intelligence=intelligence,
         skill=skill,
     )
-    lines = [
-        f"Scaffolded {name} at {scaffold.root}",
-        (
-            f"  {len(scaffold.files)} files written as a {language} tool with {intelligence} intelligence, "
-            "committed to a new git repository with no remote"
-        ),
-        f"  environment synced: `uv run {name} manifest` works from that directory",
-    ]
-    if skill:
-        lines.append(f"  Agent Skill at skills/{name}/SKILL.md")
-    lines.append("  reference/ holds shallow clones of:")
-    lines.extend(f"    {repository}" for repository in scaffold.references)
-    lines.extend(
-        [
-            "Next:",
-            f"  cd {scaffold.root}",
-            "  read AGENTS.md, then fill in the Goals and Non-Goals in docs/00-vision.md",
-            f"  add the first capability under src/{name.replace('-', '_')}/capabilities/<name>/, then expose it from lib.py and cli.py",
-            "  document it in docs/01-library.md and docs/02-cli.md, and add its worked invocation to SMART_TOOL.md",
-            "  run `prek run --all-files`, `uv run pytest`, and the conformance kit as CONTRIBUTING.md describes",
-            "  add a remote and push when ready",
-        ]
-    )
-    typer.echo("\n".join(lines))
+    typer.echo(scaffold.output_message)
 
 
 @app.command()
@@ -126,26 +103,8 @@ def add_smart_capability(
         model=model,
         reasoning_effort=reasoning_effort,
     )
-    lines = [added.report, "", f"Checks in {added.root}:"]
-    for check in added.checks:
-        reason = f": {check.output}" if check.status == "skipped" else ""
-        lines.append(f"  {check.name} {check.status}{reason}")
-    lines.extend(
-        [
-            "Next:",
-            "  try the command the report names",
-            "  run the tool's own checks as its CONTRIBUTING.md describes",
-            "  commit and push it if it looks right",
-        ]
-    )
-    typer.echo("\n".join(lines))
-    failing = [check.name for check in added.checks if check.status == "failed"]
-    if failing:
-        typer.echo(
-            f"Still failing after {added.fix_rounds} fix rounds: {', '.join(failing)}. "
-            f"The capability is in the working tree at {added.root}; fix the checks or discard the changes.",
-            err=True,
-        )
+    typer.echo(added.output_message)
+    if any(check.status == "failed" for check in added.checks):
         raise typer.Exit(1)
 
 

@@ -66,6 +66,9 @@ class Scaffold(BaseModel):
     root: Path = Field(description="The new tool's distribution root")
     files: list[Path] = Field(description="Every file written, relative to the root")
     references: list[str] = Field(description="The repositories cloned into reference/")
+    output_message: str = Field(
+        description="What was created and what to do next in the new tool, for the calling agent"
+    )
 
 
 # endregion
@@ -91,6 +94,9 @@ class AddedCapability(BaseModel):
     report: str = Field(description="The agent's final message: what it added, how to try it, caveats")
     checks: list[Check] = Field(description="The tool's own checks, run after the work finished")
     fix_rounds: int = Field(description="Extra agent runs spent on failing checks")
+    output_message: str = Field(
+        description="The report, the checks, what to do next, and any check still failing, for the calling agent"
+    )
 
 
 # endregion
