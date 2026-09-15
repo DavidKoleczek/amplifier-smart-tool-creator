@@ -14,6 +14,12 @@ Prerequisites:
 uv tool install git+https://github.com/DavidKoleczek/amplifier-smart-tool-creator
 ```
 
+To use it as a library:
+
+```bash
+uv add "amplifier-smart-tool-creator @ git+https://github.com/DavidKoleczek/amplifier-smart-tool-creator"
+```
+
 To upgrade to the latest:
 
 ```bash

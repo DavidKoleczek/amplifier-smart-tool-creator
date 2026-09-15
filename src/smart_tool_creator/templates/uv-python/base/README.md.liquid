@@ -16,7 +16,13 @@ From a clone of this repository:
 uv tool install .
 ```
 
-To upgrade after pulling changes, run the same command with `--force`.
+To use it as a library:
+
+```bash
+uv add /path/to/{{ name }}
+```
+
+To upgrade the CLI after pulling changes, run `uv tool install .` again with `--force`.
 {% if skill %}
 To teach a coding agent how to drive it, install the [skill](skills/{{ name }}/SKILL.md) at `skills/{{ name }}/` with your agent's skills client.
 {% endif %}
