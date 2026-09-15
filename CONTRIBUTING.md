@@ -7,7 +7,7 @@
 Install:
 
 - [Git](https://git-scm.com/)
-- [uv](https://docs.astral.sh/uv/getting-started/installation/): Manages Python environments
+- [uv](https://docs.astral.sh/uv/getting-started/installation/) 0.9.17 or newer: Manages Python environments. Older versions cannot read the project's relative `exclude-newer` setting.
 - [prek](https://github.com/j178/prek): Used for precommit hooks. Recommended to install through PyPI/uv with `uv tool install prek`. Use `uv tool upgrade prek` to update it.
 - [GitHub CLI](https://cli.github.com/) for intelligence features with GitHub Copilot.
 - [GitHub Copilot subscription](https://github.com/github/copilot-cli#prerequisites) for intelligent features.
