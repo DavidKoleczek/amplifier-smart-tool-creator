@@ -1,9 +1,11 @@
 """What an intelligence implementation is asked to do, and what it answers with."""
 
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import BaseModel, Field
+
+from smart_tool_creator.schemas import ReasoningEffort
 
 
 class HostWorkspace(BaseModel):
@@ -24,8 +26,12 @@ class AgentRequest(BaseModel):
     output_schema: dict[str, Any] | None = Field(
         default=None, description="JSON schema the structured output must satisfy"
     )
-    reasoning_effort: Literal["low", "medium", "high", "xhigh", "max"] = "low"
+    reasoning_effort: ReasoningEffort = "low"
     timeout_seconds: int = Field(gt=0)
+    resume: str | None = Field(
+        default=None,
+        description="The session_id of an earlier result to continue in, so the agent keeps what it learned; None starts fresh",
+    )
 
 
 class AgentResult(BaseModel):
@@ -36,3 +42,6 @@ class AgentResult(BaseModel):
     )
     text: str = Field(default="", description="The agent's final message")
     error: str | None = None
+    session_id: str | None = Field(
+        default=None, description="Identifies this run's session so a later request can resume it"
+    )

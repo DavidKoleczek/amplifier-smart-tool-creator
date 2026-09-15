@@ -27,6 +27,12 @@ requires:
       capabilities. Without it, only the deterministic capabilities run.
     optional: true
     install: https://github.com/github/copilot-cli#prerequisites
+  - name: prek
+    purpose: >
+      Runs the lint and format checks of the tool being extended by add-smart-capability.
+      Without it that check is skipped.
+    optional: true
+    install: https://github.com/j178/prek
 ---
 
 A smart tool for building smart tools. It scaffolds the structure the
@@ -88,13 +94,17 @@ spec and the SDK to read while developing. The environment is synced and the fir
 made. Deterministic, but needs network for `uv sync` and the clones.
 
 ```bash
-smart-tool-creator init release-notes --description "Summarizes changelogs into release notes" --skill
+smart-tool-creator init incident-postmortem --description "Writes, reviews, and tracks blameless postmortems from your incident platform's records" --skill
 ```
 
 ```python
 from smart_tool_creator.lib import init
 
-scaffold = init("release-notes", "Summarizes changelogs into release notes", skill=True)
+scaffold = init(
+    "incident-postmortem",
+    "Writes, reviews, and tracks blameless postmortems from your incident platform's records",
+    skill=True,
+)
 scaffold.root, scaffold.files, scaffold.references
 ```
 
@@ -107,6 +117,49 @@ the tool is for; both land in the manifest. `--directory` chooses where it goes,
 Afterwards, work inside the new repository: read its `AGENTS.md` first, add domain
 capabilities to its library, and run the conformance kit as its `CONTRIBUTING.md` describes.
 Adding a remote and pushing is the user's call.
+
+## Adding a smart capability
+
+`add-smart-capability` extends a smart tool that already exists: an agent reads the tool,
+implements one model-backed capability in its library, exposes it from the CLI, writes the
+tests and the docs, then runs the tool's own checks (`uv run pytest`, the conformance kit,
+and `prek run --all-files` when `prek` is installed) and fixes what they report. Nothing is
+committed; the working tree is left for you to review. Model-backed.
+
+```bash
+smart-tool-creator add-smart-capability \
+  "Given an incident id, fetch its chat transcript and alert timeline from the incident platform and draft a blameless postmortem: summary, impact, contributing factors, and action items with owners" \
+  --directory ~/src/incident-postmortem \
+  --context "The platform client is src/incident_postmortem/platform.py; fetch through it, never call the API directly" \
+  --context "Our postmortem template is at ~/notes/postmortem-template.md; match its headings"
+```
+
+```python
+from pathlib import Path
+
+from smart_tool_creator.lib import add_smart_capability
+
+added = add_smart_capability(
+    "Given an incident id, fetch its chat transcript and alert timeline from the incident platform "
+    "and draft a blameless postmortem: summary, impact, contributing factors, and action items with owners",
+    directory=Path("~/src/incident-postmortem").expanduser(),
+    context=[
+        "The platform client is src/incident_postmortem/platform.py; fetch through it, never call the API directly",
+        "Our postmortem template is at ~/notes/postmortem-template.md; match its headings",
+    ],
+)
+added.report, added.checks, added.fix_rounds
+```
+
+The request is the whole brief: what the capability does, for whom, and what it takes in and
+gives back. `--directory` names the tool to work in, the current directory when omitted; it
+must hold a `smart-tool.json`, so scaffold with `init` first. `--context` is repeatable free
+text, usually paths to notes, transcripts, or exemplars the agent should read before it
+designs anything; it reads them itself, so name them rather than pasting them. `--model` and
+`--reasoning-effort` pick the agent behind it.
+
+The result carries the agent's report, one entry per check, and how many extra rounds were
+spent fixing them. A check still failing when the work stops is reported as such and exits 1.
 
 ## Output and failure contract
 

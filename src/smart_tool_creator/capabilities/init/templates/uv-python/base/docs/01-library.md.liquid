@@ -17,6 +17,7 @@ class Intelligence(Protocol):
 
 `preflight` raises `{{ error_class }}` naming what to configure when the implementation cannot run.
 `run` executes one agent: `AgentRequest` holds the prompt, model, optional workspace, and optional output schema; `AgentResult` holds the text, structured output, or error.
+Setting `AgentRequest.resume` to an earlier `AgentResult.session_id` continues that session instead of starting a fresh one, so the agent keeps what it learned.
 
 `default_intelligence()` returns the shipped implementation, `CopilotIntelligence`, built on the [GitHub Copilot SDK](https://github.com/github/copilot-sdk) and signed in through the GitHub CLI.
 Another implementation is a module satisfying the protocol and a branch in that factory.
@@ -59,5 +60,6 @@ def repository_url() -> str | None
 
 ## Adding a capability
 
-Each capability of the library gets a section here: what it does and when to reach for it, its signature, what each argument means, and what it returns or raises.
-Model-backed capabilities say so.
+A capability's code goes in `{{ package }}/capabilities/<name>/`, with its prompts and templates beside it, and `lib.py` gets a facade function that imports it and is the only caller of it.
+Each capability of the library gets a section here: what it does and when to reach for it, the signature `lib.py` exposes, what each argument means, and what it returns or raises.
+Model-backed capabilities say so, and take `model` and `reasoning_effort`, defaulting to `DEFAULT_INTELLIGENCE_MODEL` and `low` from `{{ package }}.schemas`.

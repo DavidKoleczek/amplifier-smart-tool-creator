@@ -1,8 +1,9 @@
 # CLI Reference
 
-The CLI is a thin wrapper over the [library](01-library.md). Each command maps to one library capability; this page documents only the command-line surface: flags, defaults, and exit behavior.
+The CLI is a thin wrapper over the [library](01-library.md): one command per capability, taking the same arguments under the same names, and doing nothing the library does not. 
+What each argument means and what a capability returns or raises is documented there. This page covers only what the CLI adds: the invocation shape, and what reaches stdout, stderr, and the exit code.
 
-Results go to stdout and diagnostics to stderr. A failure the library can name prints its message to stderr and exits 1.
+Results go to stdout and diagnostics to stderr. A failure the library can name prints its message to stderr and exits 1; a bad invocation exits 2.
 
 ## Help
 
@@ -17,30 +18,26 @@ smart-tool-creator <command> --help   one command in full: arguments, defaults, 
 ## smart-tool-creator manifest
 
 ```bash
-# Print the tool's manifest as JSON
 smart-tool-creator manifest
 ```
 
-Deterministic; runs with no provider configured.
+`lib.load_manifest()`, printed as JSON.
 
 ## smart-tool-creator init
 
 ```bash
-# Scaffold a new smart tool into ./release-notes
-smart-tool-creator init release-notes --description "Summarizes changelogs into release notes"
-
-# Choose the directory and ship an Agent Skill alongside the tool
-smart-tool-creator init release-notes --description "..." --directory ~/src/release-notes --skill
+smart-tool-creator init NAME --description TEXT [--directory PATH] [--language uv-python] [--intelligence copilot-sdk] [--skill]
 ```
 
-```
-NAME                   the tool's slug, lowercase alphanumeric and hyphens
---description TEXT     required; becomes the manifest description
---directory PATH       where to create it; NAME under the current directory when omitted
---language             uv-python (default)
---intelligence         copilot-sdk (default)
---skill                also write skills/NAME/SKILL.md
+`lib.init(name, description, ...)` with `NAME` positional and every other argument an option of the same name. 
+Prints where the tool landed, what was written and committed, the repositories cloned into `reference/`, and the next steps.
+
+## smart-tool-creator add-smart-capability
+
+```bash
+smart-tool-creator add-smart-capability REQUEST [--directory PATH] [--context TEXT]... [--model gpt-6-astra] [--reasoning-effort low]
 ```
 
-Prints a plain summary: where the tool landed, what was written and committed, and which repositories were cloned into `reference/`. 
-Deterministic; needs `git` and `uv` on `PATH`, a git identity for the first commit, and network access for `uv sync` and the reference clones.
+`lib.add_smart_capability(request, ...)` with `REQUEST` positional and `--context` repeated once per entry. 
+Prints the agent's report, one line per check with its status (a skipped check names why on the same line), and the next steps. 
+When a check is still failing after the fix rounds, a stderr line names it and the exit code is 1; the work stays in the tool's working tree either way.

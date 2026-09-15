@@ -6,7 +6,8 @@ This is a Smart Tool that must conform to Microsoft's [Amplifier Smart Tool Spec
 - After making changes, `prek run --all-files` and `uv run pytest` must pass before the work is done.
 - `docs/00-vision.md` is the source of truth for what this tool is and is not. Then `README.md` and `CONTRIBUTING.md`, then the rest of `docs/`. When work changes any of them, propose the doc updates at the end and call out contradictions.
 - The library is the tool. Every capability lives in the library and is reachable from `lib.py`. The CLI and any other surface are thin wrappers: argument parsing and I/O conventions, then a call into the library. Capability that exists only in a wrapper is a defect.
-- Deterministic capabilities run with no model provider configured. Model-backed capabilities go through the `Intelligence` interface, never an SDK directly, and their help text says they are model-backed.
+- Each domain capability lives in `capabilities/<name>/`, with its prompts and templates beside its code. `lib.py` imports it and is the only place that does. `core/` holds only what every smart tool has: the manifest and the skill.
+- Deterministic capabilities run with no model provider configured. Model-backed capabilities go through the `Intelligence` interface, never an SDK directly, and their help text says they are model-backed. They default to `DEFAULT_INTELLIGENCE_MODEL` and `low` reasoning effort from `schemas.py` and expose both as parameters; never hardcode a model name.
 - Failures name what went wrong and how to fix it. The caller is usually an agent.
 - Once this tool has a remote, declare it in `pyproject.toml` under `[project.urls]` as `Repository = "<url>"`. `--help` then carries it, so an agent that can run the tool but not read its files still finds the docs.
 - Never modify this file unless explictly told.

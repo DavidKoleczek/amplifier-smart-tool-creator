@@ -11,7 +11,7 @@ from liquid import Environment, StrictUndefined
 
 from smart_tool_creator.schemas import SLUG_PATTERN, IntelligenceLayer, Language, Scaffold, SmartToolCreatorError
 
-TEMPLATES_ROOT = Path(__file__).parents[1] / "templates"
+TEMPLATES_ROOT = Path(__file__).parent / "templates"
 TEMPLATE_SUFFIX = ".liquid"
 PACKAGE_SEGMENT = "__package__"
 NAME_SEGMENT = "__name__"
@@ -78,7 +78,7 @@ def _preflight(name: str, description: str, root: Path) -> None:
     """Everything that can be known before a file is written, so a failure leaves no half-built tool."""
     if re.match(SLUG_PATTERN, name) is None:
         raise SmartToolCreatorError(
-            f"'{name}' is not a usable tool name. Use lowercase letters, digits, and single hyphens, as in 'release-notes'."
+            f"'{name}' is not a usable tool name. Use lowercase letters, digits, and single hyphens, as in 'incident-postmortem'."
         )
     if not description:
         raise SmartToolCreatorError(

@@ -27,7 +27,8 @@ def test_skill_is_a_wrapped_document_naming_every_capability() -> None:
     assert "# smart-tool-creator" in document
     assert load_manifest().body in document
     for capability in CAPABILITIES:
-        assert f"`{capability.name}` [deterministic]" in document
+        kind = "model-backed" if capability.model_backed else "deterministic"
+        assert f"`{capability.name}` [{kind}]" in document
         assert f"`smart-tool-creator {capability.name} --help`" in document
 
 
