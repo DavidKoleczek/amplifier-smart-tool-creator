@@ -172,3 +172,6 @@ invocation. Never treat an empty result as success.
 Import the library from Python. Shell out to the CLI from anything that cannot import Python
 in-process: a shell script, a CI job, or an agent that can run commands but not load a Python
 object. Both reach the same capabilities.
+
+To chain capabilities, here or with other smart tools, write a script against the libraries
+and pass return values between calls. The CLI's text output is for reading, not for parsing.
