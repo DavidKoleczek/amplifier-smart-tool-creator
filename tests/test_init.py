@@ -5,7 +5,10 @@ import os
 from pathlib import Path
 import subprocess
 
+import pytest
+
 from smart_tool_creator.lib import init
+from smart_tool_creator.schemas import SmartToolCreatorError
 
 NAME = "release-notes"
 DESCRIPTION = "Summarizes changelogs into release notes"
@@ -95,3 +98,45 @@ def test_init_produces_a_conforming_committed_tool(tmp_path: Path) -> None:
     assert conformance.returncode == 0, conformance.stderr
     assert verdict["verdict"] == "PASS", verdict["failed_rules"]
     assert verdict["counts"]["skip"] == 0, verdict
+
+
+def test_init_with_a_repository_points_every_install_at_it(tmp_path: Path) -> None:
+    root = tmp_path / NAME
+    repository = "https://github.com/example/release-notes"
+    result = init(NAME, DESCRIPTION, directory=root, skill=True, repository=f"{repository}.git")
+
+    assert run(["git", "remote", "get-url", "origin"], root).stdout.strip() == repository
+    assert run(["git", "status", "--porcelain"], root).stdout.strip() == ""
+    assert f"whose origin is {repository}" in result.output_message
+    assert "git push -u origin main" in result.output_message
+
+    readme = (root / "README.md").read_text(encoding="utf-8")
+    assert f"uv tool install git+{repository}" in readme
+    assert f'uv add "{NAME} @ git+{repository}"' in readme
+    assert f"uvx --from git+{repository} {NAME} --help" in readme
+    assert "npx skills add example/release-notes" in readme
+    assert f"uv tool upgrade {NAME}" in readme
+    assert f"uv tool uninstall {NAME}" in readme
+    assert "From a clone" not in readme
+
+    for relative in ("src/release_notes/SMART_TOOL.md", f"skills/{NAME}/SKILL.md"):
+        content = (root / relative).read_text(encoding="utf-8")
+        assert f"uv tool install git+{repository}" in content, relative
+        assert "From a clone" not in content, relative
+    assert f"repository: {repository}" in (root / f"skills/{NAME}/SKILL.md").read_text(encoding="utf-8")
+    assert f'Repository = "{repository}"' in (root / "pyproject.toml").read_text(encoding="utf-8")
+
+    invoked = run(["uv", "run", NAME, "--help"], root)
+    assert invoked.returncode == 0, invoked.stderr
+    assert f"Repository: {repository}" in invoked.stdout.splitlines()[2]
+
+    passes(["uv", "run", "pytest"], root)
+
+
+def test_init_refuses_a_repository_that_is_not_https(tmp_path: Path) -> None:
+    root = tmp_path / NAME
+
+    with pytest.raises(SmartToolCreatorError, match="not a usable repository URL"):
+        init(NAME, DESCRIPTION, directory=root, repository="git@github.com:example/release-notes.git")
+
+    assert not root.exists()

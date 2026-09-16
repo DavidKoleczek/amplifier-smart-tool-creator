@@ -65,6 +65,14 @@ def init(
     skill: Annotated[
         bool, typer.Option("--skill", help="Also ship an Agent Skill that teaches an agent to drive the tool.")
     ] = False,
+    repository: Annotated[
+        str | None,
+        typer.Option(
+            "--repository",
+            help="The https:// URL the tool will be cloned from. Declared in pyproject.toml, used by every install "
+            "instruction, and added as the origin remote; nothing is pushed.",
+        ),
+    ] = None,
 ) -> None:
     """Scaffold a new smart tool: a git repository holding a spec-conforming tool that passes the conformance kit. Deterministic."""
     scaffold = lib.init(
@@ -74,6 +82,7 @@ def init(
         language=language,
         intelligence=intelligence,
         skill=skill,
+        repository=repository,
     )
     typer.echo(scaffold.output_message)
 

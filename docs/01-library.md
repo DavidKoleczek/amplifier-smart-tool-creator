@@ -71,6 +71,7 @@ def init(
     language: Language = "uv-python",
     intelligence: IntelligenceLayer = "copilot-sdk",
     skill: bool = False,
+    repository: str | None = None,
 ) -> Scaffold
 ```
 
@@ -79,6 +80,7 @@ def init(
 - `directory`: where the tool is created; `name` under the current directory when omitted. Must not exist, or be empty.
 - `language` and `intelligence`: the choices made at scaffold time, listed below. Either can be changed later; each is a set of files, not a commitment.
 - `skill`: also ship an [Agent Skill](https://agentskills.io/specification) at `skills/<name>/SKILL.md` that teaches a coding agent to drive the tool.
+- `repository`: the `https://` URL the tool will be cloned from. When given, it is declared in `pyproject.toml` under `[project.urls]` so `--help` carries it, every install instruction in the `README.md`, manifest, and skill uses `git+<url>` (with update and uninstall commands, and `npx skills add` for the skill), and it becomes the `origin` remote. Nothing is pushed. When omitted, the instructions install from a clone and there is no remote.
 
 Every scaffold carries the same shape as this repository: the manifest and descriptor, a library with a thin CLI over it, a `README.md`, `CONTRIBUTING.md`, and `docs/` written for the new tool, and an `AGENTS.md` holding the principles the spec asks of a smart tool. 
 The model-backed capabilities sit behind an `Intelligence` interface so the SDK underneath is a module, not a rewrite.

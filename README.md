@@ -52,8 +52,8 @@ npx skills remove smart-tool-creator   # add --global if the skill was installed
 # Print the tool's manifest as JSON
 smart-tool-creator manifest
 
-# Scaffold a new smart tool into ./incident-postmortem, optionally with an Agent Skill. Specify a specific directory with --directory
-smart-tool-creator init incident-postmortem --description "Writes, reviews, and tracks blameless postmortems from your incident platform's records" --skill
+# Scaffold a new smart tool into ./incident-postmortem, optionally with an Agent Skill and the repository it will be pushed to. Specify a specific directory with --directory
+smart-tool-creator init incident-postmortem --description "Writes, reviews, and tracks blameless postmortems from your incident platform's records" --skill --repository https://github.com/org/incident-postmortem
 
 # Add one model-backed capability to an existing smart tool, verified against that tool's own checks
 smart-tool-creator add-smart-capability "Given an incident id, fetch its chat transcript and alert timeline from the incident platform and draft a blameless postmortem: summary, impact, contributing factors, and action items with owners" --directory ./incident-postmortem

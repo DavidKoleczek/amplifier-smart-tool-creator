@@ -94,7 +94,7 @@ spec and the SDK to read while developing. The environment is synced and the fir
 made. Deterministic, but needs network for `uv sync` and the clones.
 
 ```bash
-smart-tool-creator init incident-postmortem --description "Writes, reviews, and tracks blameless postmortems from your incident platform's records" --skill
+smart-tool-creator init incident-postmortem --description "Writes, reviews, and tracks blameless postmortems from your incident platform's records" --skill --repository https://github.com/org/incident-postmortem
 ```
 
 ```python
@@ -104,6 +104,7 @@ scaffold = init(
     "incident-postmortem",
     "Writes, reviews, and tracks blameless postmortems from your incident platform's records",
     skill=True,
+    repository="https://github.com/org/incident-postmortem",
 )
 scaffold.root, scaffold.files, scaffold.references, scaffold.output_message
 ```
@@ -111,15 +112,17 @@ scaffold.root, scaffold.files, scaffold.references, scaffold.output_message
 Pick a slug name (lowercase, digits, hyphens) and a one-sentence description that says what
 the tool is for; both land in the manifest. `--directory` chooses where it goes, default
 `./<name>`, which must not exist or must be empty. `--skill` also writes
-`skills/<name>/SKILL.md`. Language and intelligence layer default to `uv-python` and
-`copilot-sdk`.
+`skills/<name>/SKILL.md`. `--repository <url>` names where the tool will live: it is
+declared in `pyproject.toml`, every install instruction uses `git+<url>`, and it becomes
+the `origin` remote, though nothing is pushed. Without it the instructions install from a
+clone. Language and intelligence layer default to `uv-python` and `copilot-sdk`.
 
 Afterwards, work inside the new repository, following the next steps in the result's `output_message`:
 read its `AGENTS.md`, fill in `docs/00-vision.md` and, if the surface is already clear,
 `docs/01-library.md`, then add domain capabilities to its library and run the conformance
 kit as its `CONTRIBUTING.md` describes. The docs come first because they set the stage for
-everything implemented; keep them concise and written for people. Adding a remote and
-pushing is the user's call.
+everything implemented; keep them concise and written for people. Pushing is the user's
+call, as is adding a remote when `--repository` was not given.
 
 ## Adding a smart capability
 
