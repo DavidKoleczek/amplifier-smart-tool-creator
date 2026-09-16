@@ -50,8 +50,13 @@ def init(
     language: Language = "uv-python",
     intelligence: IntelligenceLayer = "copilot-sdk",
     skill: bool = False,
+    repository: str | None = None,
 ) -> Scaffold:
-    """Scaffold a new smart tool: a git repository with no remote, synced, committed, and conforming to the spec."""
+    """Scaffold a new smart tool: a git repository, synced, committed, and conforming to the spec.
+
+    With `repository`, the URL it will be cloned from, the scaffold declares it in `pyproject.toml`, points every
+    install instruction at it, and adds it as the `origin` remote; nothing is pushed.
+    """
     return scaffold.init(
         name,
         description,
@@ -59,6 +64,7 @@ def init(
         language=language,
         intelligence=intelligence,
         skill=skill,
+        repository=repository,
     )
 
 

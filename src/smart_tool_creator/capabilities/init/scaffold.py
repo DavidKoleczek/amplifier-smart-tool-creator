@@ -39,28 +39,33 @@ def init(
     language: Language = "uv-python",
     intelligence: IntelligenceLayer = "copilot-sdk",
     skill: bool = False,
+    repository: str | None = None,
 ) -> Scaffold:
     """Scaffold a new smart tool and leave it committed, synced, and runnable."""
     root = (Path.cwd() / name if directory is None else directory).resolve()
     # One line with no closing period, so it drops into the manifest as is and into prose as a sentence.
     description = " ".join(description.split()).rstrip(".")
-    _preflight(name, description, root)
+    if repository is not None:
+        repository = repository.strip().rstrip("/").removesuffix(".git")
+    _preflight(name, description, root, repository)
 
     references = reference_repositories(intelligence, skill)
     sources = [TEMPLATES_ROOT / language / "base", TEMPLATES_ROOT / language / "intelligence" / intelligence]
     if skill:
         sources.append(TEMPLATES_ROOT / language / "skill")
-    variables = _variables(name, description, intelligence, references, skill)
+    variables = _variables(name, description, intelligence, references, skill, repository)
 
     files = sorted(file for source in sources for file in _render(source, root, variables))
     _git(["init", "--initial-branch=main"], root, "Could not create the git repository")
+    if repository is not None:
+        _git(["remote", "add", "origin", repository], root, "Could not add the remote")
     _run(["uv", "sync"], root, "Could not sync the new tool's environment")
-    for repository in references:
-        destination = Path("reference") / repository.rsplit("/", 1)[-1]
+    for reference in references:
+        destination = Path("reference") / reference.rsplit("/", 1)[-1]
         _git(
-            ["clone", "--depth", "1", "--single-branch", repository, str(destination)],
+            ["clone", "--depth", "1", "--single-branch", reference, str(destination)],
             root,
-            f"Could not clone the reference {repository}",
+            f"Could not clone the reference {reference}",
         )
     _git(["add", "-A"], root, "Could not stage the new tool")
     _git(["commit", "-m", f"Scaffold {name} with smart-tool-creator"], root, "Could not commit the new tool")
@@ -83,7 +88,7 @@ def reference_repositories(intelligence: IntelligenceLayer, skill: bool) -> list
     return references
 
 
-def _preflight(name: str, description: str, root: Path) -> None:
+def _preflight(name: str, description: str, root: Path, repository: str | None) -> None:
     """Everything that can be known before a file is written, so a failure leaves no half-built tool."""
     if re.match(SLUG_PATTERN, name) is None:
         raise SmartToolCreatorError(
@@ -92,6 +97,11 @@ def _preflight(name: str, description: str, root: Path) -> None:
     if not description:
         raise SmartToolCreatorError(
             "The new tool needs a description. Say what it is for and when to reach for it; it becomes the manifest description."
+        )
+    if repository is not None and not repository.startswith("https://"):
+        raise SmartToolCreatorError(
+            f"'{repository}' is not a usable repository URL. Give the https:// URL the tool will be cloned from, "
+            "as in 'https://github.com/org/incident-postmortem'."
         )
     if root.exists():
         if not root.is_dir():
@@ -111,7 +121,12 @@ def _preflight(name: str, description: str, root: Path) -> None:
 
 
 def _variables(
-    name: str, description: str, intelligence: IntelligenceLayer, references: list[str], skill: bool
+    name: str,
+    description: str,
+    intelligence: IntelligenceLayer,
+    references: list[str],
+    skill: bool,
+    repository: str | None,
 ) -> dict[str, object]:
     package = name.replace("-", "_")
     title = " ".join(word.capitalize() for word in name.split("-"))
@@ -130,7 +145,17 @@ def _variables(
         "dependencies": sorted(BASE_DEPENDENCIES + INTELLIGENCE_DEPENDENCIES[intelligence]),
         "references": references,
         "skill": skill,
+        "repository": repository,
+        "skill_source": _skill_source(repository),
     }
+
+
+def _skill_source(repository: str | None) -> str | None:
+    """What `npx skills add` takes: the short `owner/repo` for a GitHub repository, the URL for any other host."""
+    if repository is None:
+        return None
+    match = re.fullmatch(r"https://github\.com/([^/]+/[^/]+)", repository)
+    return match.group(1) if match else repository
 
 
 def _docstring(text: str) -> str:
