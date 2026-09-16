@@ -65,6 +65,12 @@ def test_init_produces_a_conforming_committed_tool(tmp_path: Path) -> None:
     assert run(["git", "remote"], root).stdout.strip() == ""
     assert run(["git", "status", "--porcelain"], root).stdout.strip() == ""
 
+    placeholder = f"https://github.com/<owner>/{NAME}"
+    for relative in ("README.md", "pyproject.toml", "src/release_notes/SMART_TOOL.md", f"skills/{NAME}/SKILL.md"):
+        assert placeholder in (root / relative).read_text(encoding="utf-8"), relative
+    assert f"placeholder {placeholder}" in result.output_message
+    assert "git remote add origin <url>" in result.output_message
+
     for relative in committed:
         content = (root / relative).read_text(encoding="utf-8")
         assert not any(trace in content for trace in CREATOR_TRACES), relative
@@ -117,12 +123,12 @@ def test_init_with_a_repository_points_every_install_at_it(tmp_path: Path) -> No
     assert "npx skills add example/release-notes" in readme
     assert f"uv tool upgrade {NAME}" in readme
     assert f"uv tool uninstall {NAME}" in readme
-    assert "From a clone" not in readme
 
     for relative in ("src/release_notes/SMART_TOOL.md", f"skills/{NAME}/SKILL.md"):
-        content = (root / relative).read_text(encoding="utf-8")
-        assert f"uv tool install git+{repository}" in content, relative
-        assert "From a clone" not in content, relative
+        assert f"uv tool install git+{repository}" in (root / relative).read_text(encoding="utf-8"), relative
+    assert "github.com/<owner>/" not in "".join(
+        (root / relative).read_text(encoding="utf-8") for relative in result.files
+    )
     assert f"repository: {repository}" in (root / f"skills/{NAME}/SKILL.md").read_text(encoding="utf-8")
     assert f'Repository = "{repository}"' in (root / "pyproject.toml").read_text(encoding="utf-8")
 

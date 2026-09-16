@@ -4,10 +4,8 @@ description: >-
   {{ description }}. Drive it from the command line as `{{ name }}`, or from Python through
   `{{ package }}.lib`. Triggers on "{{ name }}".
 license: MIT
-{%- if repository %}
 metadata:
   repository: {{ repository }}
-{%- endif %}
 ---
 
 # Using {{ name }}
@@ -15,7 +13,7 @@ metadata:
 {{ description }}.
 
 ## Install
-{% if repository %}
+
 ```bash
 # as a CLI
 uv tool install git+{{ repository }}
@@ -26,17 +24,6 @@ uv add "{{ name }} @ git+{{ repository }}"
 # once, without installing
 uvx --from git+{{ repository }} {{ name }} --help
 ```
-{% else %}
-From a clone of the repository:
-
-```bash
-# as a CLI
-uv tool install .
-
-# as a library, from another project
-uv add /path/to/{{ name }}
-```
-{% endif %}
 ## Use it
 
 Run `{{ name }} --help`. It prints the tool's skill: when to use it, every capability,

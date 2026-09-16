@@ -9,7 +9,7 @@ This is a Smart Tool that must conform to Microsoft's [Amplifier Smart Tool Spec
 - Each domain capability lives in `capabilities/<name>/`, with its prompts and templates beside its code. `lib.py` imports it and is the only place that does. `core/` holds only what every smart tool has: the manifest and the skill.
 - Deterministic capabilities run with no model provider configured. Model-backed capabilities go through the `Intelligence` interface, never an SDK directly, and their help text says they are model-backed. They default to `DEFAULT_INTELLIGENCE_MODEL` and `low` reasoning effort from `schemas.py` and expose both as parameters; never hardcode a model name.
 - Failures name what went wrong and how to fix it. The caller is usually an agent.
-- Once this tool has a remote, declare it in `pyproject.toml` under `[project.urls]` as `Repository = "<url>"`. `--help` then carries it, so an agent that can run the tool but not read its files still finds the docs.
+- The `Repository` URL under `[project.urls]` in `pyproject.toml` is the tool's canonical source: `--help` carries it, so an agent that can run the tool but not read its files still finds the docs, and every install instruction in `README.md`, `SMART_TOOL.md`, and the skill is built on it. If it is still the `<owner>` placeholder, replace it everywhere it appears once the remote exists.
 - Never modify this file unless explictly told.
 
 ## Writing Style

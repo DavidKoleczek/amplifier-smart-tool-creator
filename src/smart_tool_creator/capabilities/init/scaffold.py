@@ -28,6 +28,8 @@ INTELLIGENCE_DEPENDENCIES: dict[str, list[str]] = {
 SPEC_REPOSITORY = "https://github.com/microsoft/amplifier-smart-tools"
 INTELLIGENCE_REPOSITORIES: dict[str, str] = {"copilot-sdk": "https://github.com/github/copilot-sdk"}
 SKILL_REPOSITORY = "https://github.com/agentskills/agentskills"
+# Stands in for the tool's remote until there is one, so every install instruction is already in its final shape.
+PLACEHOLDER_REPOSITORY = "https://github.com/<owner>/{name}"
 
 ENVIRONMENT = Environment(undefined=StrictUndefined)
 
@@ -48,16 +50,19 @@ def init(
     if repository is not None:
         repository = repository.strip().rstrip("/").removesuffix(".git")
     _preflight(name, description, root, repository)
+    placeholder = repository is None
+    if repository is None:
+        repository = PLACEHOLDER_REPOSITORY.format(name=name)
 
     references = reference_repositories(intelligence, skill)
     sources = [TEMPLATES_ROOT / language / "base", TEMPLATES_ROOT / language / "intelligence" / intelligence]
     if skill:
         sources.append(TEMPLATES_ROOT / language / "skill")
-    variables = _variables(name, description, intelligence, references, skill, repository)
+    variables = _variables(name, description, intelligence, references, skill, repository, placeholder)
 
     files = sorted(file for source in sources for file in _render(source, root, variables))
     _git(["init", "--initial-branch=main"], root, "Could not create the git repository")
-    if repository is not None:
+    if not placeholder:
         _git(["remote", "add", "origin", repository], root, "Could not add the remote")
     _run(["uv", "sync"], root, "Could not sync the new tool's environment")
     for reference in references:
@@ -126,7 +131,8 @@ def _variables(
     intelligence: IntelligenceLayer,
     references: list[str],
     skill: bool,
-    repository: str | None,
+    repository: str,
+    placeholder: bool,
 ) -> dict[str, object]:
     package = name.replace("-", "_")
     title = " ".join(word.capitalize() for word in name.split("-"))
@@ -146,14 +152,13 @@ def _variables(
         "references": references,
         "skill": skill,
         "repository": repository,
+        "placeholder": placeholder,
         "skill_source": _skill_source(repository),
     }
 
 
-def _skill_source(repository: str | None) -> str | None:
+def _skill_source(repository: str) -> str:
     """What `npx skills add` takes: the short `owner/repo` for a GitHub repository, the URL for any other host."""
-    if repository is None:
-        return None
     match = re.fullmatch(r"https://github\.com/([^/]+/[^/]+)", repository)
     return match.group(1) if match else repository
 
