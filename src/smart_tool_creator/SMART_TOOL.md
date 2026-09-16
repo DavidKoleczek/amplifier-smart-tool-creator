@@ -114,15 +114,17 @@ the tool is for; both land in the manifest. `--directory` chooses where it goes,
 `./<name>`, which must not exist or must be empty. `--skill` also writes
 `skills/<name>/SKILL.md`. `--repository <url>` names where the tool will live: it is
 declared in `pyproject.toml`, every install instruction uses `git+<url>`, and it becomes
-the `origin` remote, though nothing is pushed. Without it the instructions install from a
-clone. Language and intelligence layer default to `uv-python` and `copilot-sdk`.
+the `origin` remote, though nothing is pushed. Without it, `https://github.com/<owner>/<name>`
+stands in and the install instructions do not work until it is replaced and the tool is
+pushed; the result's `output_message` says so. Language and intelligence layer default to
+`uv-python` and `copilot-sdk`.
 
 Afterwards, work inside the new repository, following the next steps in the result's `output_message`:
 read its `AGENTS.md`, fill in `docs/00-vision.md` and, if the surface is already clear,
 `docs/01-library.md`, then add domain capabilities to its library and run the conformance
 kit as its `CONTRIBUTING.md` describes. The docs come first because they set the stage for
 everything implemented; keep them concise and written for people. Pushing is the user's
-call, as is adding a remote when `--repository` was not given.
+call, as is creating the remote and replacing the placeholder when `--repository` was not given.
 
 ## Adding a smart capability
 

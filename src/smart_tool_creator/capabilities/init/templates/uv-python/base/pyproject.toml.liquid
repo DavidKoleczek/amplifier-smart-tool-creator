@@ -8,11 +8,9 @@ dependencies = [{% for dependency in dependencies %}
     "{{ dependency }}",{% endfor %}
 ]
 
-{% if repository -%}
 [project.urls]
 Repository = "{{ repository }}"
 
-{% endif -%}
 [project.scripts]
 {{ name }} = "{{ package }}.cli:main"
 

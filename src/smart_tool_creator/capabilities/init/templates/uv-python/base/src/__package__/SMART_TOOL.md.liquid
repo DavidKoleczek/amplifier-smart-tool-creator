@@ -42,7 +42,7 @@ Do not fill gaps from memory. The library source beside this file, `lib.py`, car
 signatures. The repository's `docs/01-library.md` and `docs/02-cli.md` carry the rest.
 
 ## Install
-{% if repository %}
+
 ```bash
 # as a CLI
 uv tool install git+{{ repository }}
@@ -53,17 +53,6 @@ uv add "{{ name }} @ git+{{ repository }}"
 # once, without installing
 uvx --from git+{{ repository }} {{ name }} --help
 ```
-{% else %}
-From a clone of the repository:
-
-```bash
-# as a CLI
-uv tool install .
-
-# as a library, from another project
-uv add /path/to/{{ name }}
-```
-{% endif %}
 Verify with `{{ name }} manifest`, which needs no credentials.
 
 ## Prerequisites

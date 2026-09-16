@@ -9,7 +9,7 @@
 Prerequisites:
 - [uv](https://docs.astral.sh/uv/getting-started/installation/).
 - [GitHub CLI](https://cli.github.com/) signed in to an account with a [GitHub Copilot subscription](https://github.com/github/copilot-cli#prerequisites) for the model-backed capabilities.
-{% if repository %}
+
 ```bash
 uv tool install git+{{ repository }}
 ```
@@ -49,24 +49,7 @@ uv tool uninstall {{ name }}
 npx skills remove {{ name }}   # add --global if the skill was installed globally
 {%- endif %}
 ```
-{% else %}
-From a clone of this repository:
 
-```bash
-uv tool install .
-```
-
-To use it as a library:
-
-```bash
-uv add /path/to/{{ name }}
-```
-
-To upgrade the CLI after pulling changes, run `uv tool install .` again with `--force`. To uninstall, run `uv tool uninstall {{ name }}`.
-{% if skill %}
-To teach a coding agent how to drive it, install the [skill](skills/{{ name }}/SKILL.md) at `skills/{{ name }}/` with your agent's skills client.
-{% endif %}
-{%- endif %}
 Verify an install with `{{ name }} manifest`, which needs no credentials.
 
 ## Interface

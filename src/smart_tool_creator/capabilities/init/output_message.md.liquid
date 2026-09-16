@@ -1,5 +1,5 @@
 Scaffolded {{ name }} at {{ root }}
-  {{ files | size }} files written as a {{ language }} tool with {{ intelligence }} intelligence, committed to a new git repository{% if repository %} whose origin is {{ repository }}{% else %} with no remote{% endif %}
+  {{ files | size }} files written as a {{ language }} tool with {{ intelligence }} intelligence, committed to a new git repository{% if placeholder %} with no remote{% else %} whose origin is {{ repository }}{% endif %}
   environment synced: `uv run {{ name }} manifest` works from that directory
 {%- if skill %}
   Agent Skill at skills/{{ name }}/SKILL.md
@@ -19,8 +19,10 @@ Next:
   add the first capability under src/{{ package }}/capabilities/<name>/, then expose it from lib.py and cli.py
   document it in docs/01-library.md and docs/02-cli.md, and add its worked invocation to SMART_TOOL.md
   run `prek run --all-files`, `uv run pytest`, and the conformance kit as CONTRIBUTING.md describes
-{%- if repository %}
-  create {{ repository }} if it does not exist yet, then `git push -u origin main`
+{%- if placeholder %}
+  the install instructions in README.md, SMART_TOOL.md, the skill, and pyproject.toml point at the placeholder {{ repository }}
+    and do not work until the tool is pushed. When ready: create the repository, replace the placeholder everywhere it
+    appears, then `git remote add origin <url>` and `git push -u origin main`
 {%- else %}
-  add a remote and push when ready
+  create {{ repository }} if it does not exist yet, then `git push -u origin main`
 {%- endif %}
