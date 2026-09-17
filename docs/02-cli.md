@@ -10,10 +10,11 @@ Results go to stdout and diagnostics to stderr. A failure the library can name p
 ```
 smart-tool-creator -h                 terse summary for a person: the commands, a line each
 smart-tool-creator --help             the tool's skill, written for an agent driving it
-smart-tool-creator <command> --help   one command in full: arguments, defaults, exit codes
+smart-tool-creator <command> -h       terse summary of one command: its arguments and defaults
+smart-tool-creator <command> --help   that command's skill, written for an agent about to call it
 ```
 
-`--help` on the tool prints what `lib.skill()` returns; the CLI adds nothing of its own. Every command answers both `-h` and `--help` with the same per-command help.
+`--help` on the tool prints what `lib.skill()` returns and on a command what `lib.skill("<command>")` returns; the CLI adds nothing of its own.
 
 ## smart-tool-creator manifest
 

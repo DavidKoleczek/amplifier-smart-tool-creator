@@ -52,10 +52,10 @@ thin wrapper over it, so anything you can do from the shell you can also do from
 
 ## Before writing code
 
-Confirm every capability and argument against `smart-tool-creator <command> --help` before
-using it. Do not fill gaps from memory. The library source beside this file, `lib.py`,
-carries the signatures. The repository's `docs/01-library.md` and `docs/02-cli.md` carry the
-rest.
+Every capability has its own skill. Read `smart-tool-creator <command> --help` before calling
+it: it carries the arguments, a worked invocation, the result, and the failures. Do not fill
+gaps from memory. The library source beside this file, `lib.py`, carries the signatures. The
+repository's `docs/01-library.md` and `docs/02-cli.md` carry the rest.
 
 ## Install
 
@@ -84,91 +84,6 @@ Deterministic capabilities run with no provider configured. Model-backed capabil
 through GitHub Copilot, signed in as the GitHub CLI's user, and say so in their help text.
 A model-backed capability with nothing configured fails immediately and names what to set;
 it never falls back to a deterministic answer.
-
-## Scaffolding a new smart tool
-
-`init` creates a git repository (no remote) holding a tool that already passes the
-conformance kit: manifest, descriptor, library, thin CLI, docs, tests, an `AGENTS.md`
-carrying the spec's principles, and a gitignored `reference/` with shallow clones of the
-spec and the SDK to read while developing. The environment is synced and the first commit is
-made. Deterministic, but needs network for `uv sync` and the clones.
-
-```bash
-smart-tool-creator init incident-postmortem --description "Writes, reviews, and tracks blameless postmortems from your incident platform's records" --skill --repository https://github.com/org/incident-postmortem
-```
-
-```python
-from smart_tool_creator.lib import init
-
-scaffold = init(
-    "incident-postmortem",
-    "Writes, reviews, and tracks blameless postmortems from your incident platform's records",
-    skill=True,
-    repository="https://github.com/org/incident-postmortem",
-)
-scaffold.root, scaffold.files, scaffold.references, scaffold.output_message
-```
-
-Pick a slug name (lowercase, digits, hyphens) and a one-sentence description that says what
-the tool is for; both land in the manifest. `--directory` chooses where it goes, default
-`./<name>`, which must not exist or must be empty. `--skill` also writes
-`skills/<name>/SKILL.md`. `--repository <url>` names where the tool will live: it is
-declared in `pyproject.toml`, every install instruction uses `git+<url>`, and it becomes
-the `origin` remote, though nothing is pushed. Without it, `https://github.com/<owner>/<name>`
-stands in and the install instructions do not work until it is replaced and the tool is
-pushed; the result's `output_message` says so. Language and intelligence layer default to
-`uv-python` and `copilot-sdk`.
-
-Afterwards, work inside the new repository, following the next steps in the result's `output_message`:
-read its `AGENTS.md`, fill in `docs/00-vision.md` and, if the surface is already clear,
-`docs/01-library.md`, then add domain capabilities to its library and run the conformance
-kit as its `CONTRIBUTING.md` describes. The docs come first because they set the stage for
-everything implemented; keep them concise and written for people. Pushing is the user's
-call, as is creating the remote and replacing the placeholder when `--repository` was not given.
-
-## Adding a smart capability
-
-`add-smart-capability` extends a smart tool that already exists: an agent reads the tool,
-implements one model-backed capability in its library, exposes it from the CLI, writes the
-tests and the docs, then runs the tool's own checks (`uv run pytest`, the conformance kit,
-and `prek run --all-files` when `prek` is installed) and fixes what they report. Nothing is
-committed; the working tree is left for you to review. Model-backed.
-
-```bash
-smart-tool-creator add-smart-capability \
-  "Given an incident id, fetch its chat transcript and alert timeline from the incident platform and draft a blameless postmortem: summary, impact, contributing factors, and action items with owners" \
-  --directory ~/src/incident-postmortem \
-  --context "The platform client is src/incident_postmortem/platform.py; fetch through it, never call the API directly" \
-  --context "Our postmortem template is at ~/notes/postmortem-template.md; match its headings"
-```
-
-```python
-from pathlib import Path
-
-from smart_tool_creator.lib import add_smart_capability
-
-added = add_smart_capability(
-    "Given an incident id, fetch its chat transcript and alert timeline from the incident platform "
-    "and draft a blameless postmortem: summary, impact, contributing factors, and action items with owners",
-    directory=Path("~/src/incident-postmortem").expanduser(),
-    context=[
-        "The platform client is src/incident_postmortem/platform.py; fetch through it, never call the API directly",
-        "Our postmortem template is at ~/notes/postmortem-template.md; match its headings",
-    ],
-)
-added.report, added.checks, added.fix_rounds, added.output_message
-```
-
-The request is the whole brief: what the capability does, for whom, and what it takes in and
-gives back. `--directory` names the tool to work in, the current directory when omitted; it
-must hold a `smart-tool.json`, so scaffold with `init` first. `--context` is repeatable free
-text, usually paths to notes, transcripts, or exemplars the agent should read before it
-designs anything; it reads them itself, so name them rather than pasting them. `--model` and
-`--reasoning-effort` pick the agent behind it.
-
-The result carries the agent's report, one entry per check, how many extra rounds were spent
-fixing them, and an `output_message` carrying all of it for the calling agent, which is what the
-CLI prints. A check still failing when the work stops is named in the message and exits 1.
 
 ## Output and failure contract
 

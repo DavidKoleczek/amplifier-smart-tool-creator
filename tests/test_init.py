@@ -29,6 +29,7 @@ SHIPPED_ALONGSIDE = [
     "docs/02-cli.md",
     "setup-for-dev.py",
     "src/release_notes/capabilities/__init__.py",
+    "src/release_notes/core/manifest.md",
     "src/release_notes/core/skill.py",
     "src/release_notes/intelligence/interface.py",
     "src/release_notes/intelligence/copilot.py",
@@ -135,6 +136,14 @@ def test_init_with_a_repository_points_every_install_at_it(tmp_path: Path) -> No
     invoked = run(["uv", "run", NAME, "--help"], root)
     assert invoked.returncode == 0, invoked.stderr
     assert f"Repository: {repository}" in invoked.stdout.splitlines()[2]
+
+    capability_skill = run(["uv", "run", NAME, "manifest", "--help"], root)
+    terse = run(["uv", "run", NAME, "manifest", "-h"], root)
+    assert capability_skill.returncode == 0, capability_skill.stderr
+    assert f'<skill_content name="{NAME} manifest">' in capability_skill.stdout
+    assert terse.returncode == 0, terse.stderr
+    assert "Usage:" in terse.stdout
+    assert terse.stdout != capability_skill.stdout
 
     passes(["uv", "run", "pytest"], root)
 
