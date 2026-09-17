@@ -33,6 +33,16 @@ smart-tool-creator init NAME --description TEXT [--directory PATH] [--language u
 `lib.init(name, description, ...)` with `NAME` positional and every other argument an option of the same name. 
 Prints the result's `output_message`: where the tool landed, what was written and committed, the repositories cloned into `reference/`, and the next steps.
 
+## smart-tool-creator check-conformance
+
+```bash
+smart-tool-creator check-conformance [--directory PATH] [--timeout 20]
+```
+
+`lib.check_conformance(directory, timeout)`. 
+Prints the result's `output_message`: one line per rule with the kit's status and detail, the verdict with its counts, and the spec sentence behind each failing rule. 
+Exits 1 when the verdict is `FAIL`.
+
 ## smart-tool-creator add-smart-capability
 
 ```bash

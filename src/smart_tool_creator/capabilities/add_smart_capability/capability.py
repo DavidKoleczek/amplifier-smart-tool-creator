@@ -1,12 +1,16 @@
 """Add smart capability: an agent implements one model-backed capability inside an existing smart tool."""
 
-import os
 from pathlib import Path
 import shutil
 import subprocess
 
 from liquid import Environment, StrictUndefined
 
+from smart_tool_creator.capabilities.check_conformance.capability import (
+    check_conformance,
+    clean_environment,
+    conformance_command,
+)
 from smart_tool_creator.intelligence.interface import Intelligence, default_intelligence
 from smart_tool_creator.intelligence.schemas import AgentRequest, AgentResult, HostWorkspace
 from smart_tool_creator.schemas import (
@@ -23,11 +27,9 @@ OUTPUT_MESSAGE_PATH = Path(__file__).parent / "output_message.md.liquid"
 
 DESCRIPTOR = "smart-tool.json"
 PRE_COMMIT_CONFIG = ".pre-commit-config.yaml"
-CONFORMANCE_KIT = "https://raw.githubusercontent.com/microsoft/amplifier-smart-tools/main/conformance/run.py"
 
 PYTEST_COMMAND = ["uv", "run", "pytest"]
 PREK_COMMAND = ["prek", "run", "--all-files"]
-CONFORMANCE_COMMAND = ["uv", "run", "--", "uv", "run", "--no-project", CONFORMANCE_KIT, "."]
 
 ADD_SMART_CAPABILITY_TIMEOUT_SECONDS = 1800
 MAX_FIX_ROUNDS = 2
@@ -136,8 +138,25 @@ def _checks(root: Path) -> list[Check]:
     return [
         _run_check("pytest", PYTEST_COMMAND, root),
         _prek(root),
-        _run_check("conformance", CONFORMANCE_COMMAND, root),
+        _conformance(root),
     ]
+
+
+def _conformance(root: Path) -> Check:
+    """The conformance kit's verdict as a check; a failing rule's detail is what the agent needs to fix it.
+
+    Skipped, like prek, when the kit itself could not run: that is the machine's problem, not the tool's.
+    """
+    command = conformance_command(root)
+    try:
+        report = check_conformance(directory=root)
+    except SmartToolCreatorError as error:
+        return Check(name="conformance", command=command, status="skipped", output=str(error))
+    failing = [rule for rule in report.rules if rule.status == "FAIL"]
+    if not failing:
+        return Check(name="conformance", command=command, status="passed", output="")
+    output = "\n".join(f"{rule.id}: {rule.detail}\n  {rule.spec}" for rule in failing)
+    return Check(name="conformance", command=command, status="failed", output=_tail(output))
 
 
 def _prek(root: Path) -> Check:
@@ -160,7 +179,7 @@ def _prek(root: Path) -> Check:
 
 
 def _run_check(name: str, command: list[str], root: Path) -> Check:
-    completed = subprocess.run(command, cwd=root, capture_output=True, text=True, env=_clean_environment())
+    completed = subprocess.run(command, cwd=root, capture_output=True, text=True, env=clean_environment())
     if completed.returncode == 0:
         return Check(name=name, command=command, status="passed", output="")
     return Check(name=name, command=command, status="failed", output=_tail(completed.stdout + completed.stderr))
@@ -181,8 +200,3 @@ def _tail(output: str) -> str:
     if len(text) <= OUTPUT_TAIL_CHARACTERS:
         return text
     return f"[earlier output omitted]\n{text[-OUTPUT_TAIL_CHARACTERS:]}"
-
-
-def _clean_environment() -> dict[str, str]:
-    """This process's environment without its own virtual environment, which uv would otherwise use."""
-    return {key: value for key, value in os.environ.items() if key != "VIRTUAL_ENV"}

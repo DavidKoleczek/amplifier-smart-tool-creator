@@ -4,6 +4,7 @@ from typing import Literal, NamedTuple
 from pydantic import BaseModel, Field
 
 DEFAULT_INTELLIGENCE_MODEL = "gpt-6-astra"
+DEFAULT_PROBE_TIMEOUT_SECONDS = 20.0
 ReasoningEffort = Literal["low", "medium", "high", "xhigh", "max"]
 
 SEMVER_PATTERN = r"^\d+\.\d+\.\d+$"
@@ -70,6 +71,36 @@ class Scaffold(BaseModel):
     references: list[str] = Field(description="The repositories cloned into reference/")
     output_message: str = Field(
         description="What was created and what to do next in the new tool, for the calling agent"
+    )
+
+
+# endregion
+
+# region: Check conformance
+
+ConformanceStatus = Literal["PASS", "FAIL", "SKIP"]
+ConformanceVerdict = Literal["PASS", "FAIL"]
+
+
+class ConformanceRule(BaseModel):
+    """One rule of the conformance kit, as the kit reported it."""
+
+    id: str
+    status: ConformanceStatus
+    spec: str = Field(description="The spec sentence the rule operationalizes")
+    detail: str = Field(description="What the kit saw: the reason it passed, failed, or could not be evaluated")
+
+
+class ConformanceReport(BaseModel):
+    """What check_conformance produced: the kit's verdict, rule by rule, untouched."""
+
+    root: Path = Field(description="The distribution root the kit inspected")
+    verdict: ConformanceVerdict = Field(description="FAIL when any rule failed; a skipped rule never fails a tool")
+    counts: dict[str, int] = Field(description="How many rules passed, failed, and were skipped")
+    failed_rules: list[str] = Field(description="The ids of the rules that failed")
+    rules: list[ConformanceRule]
+    output_message: str = Field(
+        description="Every rule with its status and detail, then the verdict, for the calling agent"
     )
 
 

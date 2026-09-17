@@ -14,6 +14,7 @@ from typer.models import CommandFunctionType
 from smart_tool_creator import lib
 from smart_tool_creator.schemas import (
     DEFAULT_INTELLIGENCE_MODEL,
+    DEFAULT_PROBE_TIMEOUT_SECONDS,
     IntelligenceLayer,
     Language,
     ReasoningEffort,
@@ -141,6 +142,23 @@ def init(
         repository=repository,
     )
     typer.echo(scaffold.output_message)
+
+
+@app.command()
+def check_conformance(
+    directory: Annotated[
+        Path | None,
+        typer.Option("--directory", help="The smart tool's distribution root; the current directory when omitted."),
+    ] = None,
+    timeout: Annotated[
+        float, typer.Option("--timeout", help="Seconds allowed for each invocation the kit makes of the tool.")
+    ] = DEFAULT_PROBE_TIMEOUT_SECONDS,
+) -> None:
+    """Run the spec's conformance kit against a smart tool and print its verdict, rule by rule. Deterministic."""
+    report = lib.check_conformance(directory=directory, timeout=timeout)
+    typer.echo(report.output_message)
+    if report.verdict == "FAIL":
+        raise typer.Exit(1)
 
 
 @app.command()

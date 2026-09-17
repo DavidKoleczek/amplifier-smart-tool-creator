@@ -85,9 +85,10 @@ uv run pytest
 
 #### Conformance
 
-Run the spec's [conformance kit](https://github.com/microsoft/amplifier-smart-tools/tree/main/conformance) against this repository. 
-The outer `uv run` puts this project's `smart-tool-creator` on `PATH` for the kit to invoke; the inner one runs the kit with its own inline dependencies:
+Run the spec's [conformance kit](https://github.com/microsoft/amplifier-smart-tools/tree/main/conformance) against this repository through the tool's own capability, which fetches the kit and wraps it so this project's `smart-tool-creator` is on `PATH` for it to invoke:
 
 ```bash
-uv run -- uv run --no-project https://raw.githubusercontent.com/microsoft/amplifier-smart-tools/main/conformance/run.py .
+uv run smart-tool-creator check-conformance
 ```
+
+`uv run pytest` runs the same check, so a passing test suite includes conformance.
