@@ -24,6 +24,12 @@ CAPABILITIES = (
         skill="capabilities/check_conformance/SKILL.md",
     ),
     Capability(
+        "check-spec-adherence",
+        "Review a smart tool against the parts of the spec the conformance kit cannot decide, with suggestions.",
+        model_backed=True,
+        skill="capabilities/check_spec_adherence/SKILL.md",
+    ),
+    Capability(
         "add-smart-capability",
         "Add one model-backed capability to an existing smart tool, verified against that tool's own checks.",
         model_backed=True,

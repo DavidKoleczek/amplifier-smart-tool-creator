@@ -38,7 +38,8 @@ class CopilotIntelligence:
             return self._token
         if shutil.which("gh") is None:
             raise SmartToolCreatorError(
-                "Model-backed capabilities need the GitHub CLI. Install gh and sign in with `gh auth login`."
+                "Model-backed capabilities need the GitHub CLI. Install gh from https://cli.github.com/ and sign in with "
+                "`gh auth login`."
             )
         minted = subprocess.run(["gh", "auth", "token"], capture_output=True, text=True)
         if minted.returncode != 0:

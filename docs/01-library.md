@@ -158,6 +158,105 @@ class ConformanceReport(BaseModel):
 
 Raises `SmartToolCreatorError` when `directory` is not a directory, `uv` is not on `PATH`, or the kit produced no verdict: the network, uv failing to run it, or its output contract changing. The message carries the command to rerun by hand and the kit's stderr.
 
+## Check spec adherence
+
+Reviews a smart tool against the parts of the spec the conformance kit cannot decide: whether the library really holds every capability, whether the skills say what an agent needs, whether failures name their remedy. Model-backed.
+
+```python
+def check_spec_adherence(
+    directory: Path | None = None,
+    checks: list[str] | None = None,
+    model: str = DEFAULT_REVIEW_MODEL,
+    reasoning_effort: ReasoningEffort = "high",
+    intelligence: Intelligence | None = None,
+) -> SpecAdherenceReport
+```
+
+- `directory`: the tool's distribution root; the current directory when omitted. It must hold a `smart-tool.json` at its root, and no parent directory is searched.
+- `checks`: the ids to review, from the checklist below; every check when omitted.
+- `model` and `reasoning_effort`: the reviewers. The defaults differ from the other model-backed capabilities: `DEFAULT_REVIEW_MODEL` is `gpt-5.6-terra` at `high` effort, a faster model thinking harder, because a review reads much and writes little. Effort is one of `low`, `medium`, `high`, `xhigh`, `max`.
+- `intelligence`: the implementation to run through; `default_intelligence()` when omitted. Tests inject a fake.
+
+The kit runs first, through `check_conformance`. When its verdict is `FAIL`, no reviewer runs: the report carries the kit's verdict, no findings, and an `output_message` saying to fix the failing rules and call again. Judgment about a tool that fails the mechanical rules is spent on problems the kit has already named.
+
+The checklist is fixed and ships as Markdown under `capabilities/check_spec_adherence/checks/`: one directory per group holding a `GROUP.md` and one file per check, the check's id being its filename. Each check operationalizes one sentence of the spec, carried verbatim as `spec` in its frontmatter; its body is the `guidance` the reviewer reads, which says what to decide, what adheres and what deviates, where the evidence lives, and links to the spec section and a worked example. Checks are grouped by where their evidence lives rather than by spec chapter, so each group is one agent run that reads one set of files, and the groups run concurrently. A group's `GROUP.md` carries `read_first`, the paths where its evidence sits in a scaffolded tool, and its body is context shared by that group's reviewer; a reviewer starts there and finds the equivalents in a tool laid out differently.
+
+```python
+class SpecCheck(BaseModel):
+    id: str
+    spec_file: str
+    spec: str
+    guidance: str
+
+
+class ReviewGroup(BaseModel):
+    name: str
+    read_first: list[str]
+    guidance: str
+    checks: list[SpecCheck]
+```
+
+The checklist is reachable without running anything, group by group in review order; the ids `checks` accepts are the ones it returns:
+
+```python
+def spec_checks() -> list[ReviewGroup]
+```
+
+The groups and their checks, each summarized in a line; the full guidance is in the check's file:
+
+```
+boundary                            lib.py, cli.py, every other surface
+  library-holds-every-capability    nothing a wrapper does is missing from the library
+  cli-is-thin                       commands parse arguments and do I/O, then call the library
+  help-comes-from-library           what --help prints is produced by the library, the CLI adds nothing
+
+smart-paths                         the model-backed capabilities, their help text, the provider setup
+  genuinely-model-backed            at least one capability does work a model does, not a wrapper around a template
+  ai-capabilities-identifiable      a caller can tell which capabilities consult a model; stated explicitly only where it is not obvious
+  no-provider-failure-names-remedy  a smart path with nothing configured says so, says what to configure, and never returns a lesser answer
+
+self-description                    SMART_TOOL.md, each capability's skill, skills/<name>/SKILL.md, the rendered --help
+  tool-skill-content                when to reach for the tool and when not, install, worked invocations, sharp edges, where to read more; under 500 lines
+  capability-skills-complete        every capability's skill has its arguments, a worked invocation, the result, and the failures
+  agent-skill-is-thin               the shipped Agent Skill, when there is one, does not duplicate what --help renders; frontmatter and trigger keywords are expected
+  manifest-describes-the-tool       description and use_cases match what the capabilities do
+
+results                             how capabilities take input and hand back output, where they write
+  context-accepted-as-data          context is accepted as content at the library level; a path is fine where the input is a file, the CLI reads it in, or the tool's own agent reads it
+  stdout-results-stderr-diagnostics results on stdout, progress and warnings on stderr
+  artifact-location-named           a capability that writes a file says where
+  files-outside-install-tree        state, caches, logs, and temporary files land in per-user or temporary locations, never beside the source
+
+failures                            error types, preflight code, exit codes, the manifest's requires
+  failure-names-remedy              every failure a caller can hit says what went wrong and how to correct it
+  partial-results-are-failures      a capability never silently returns the part that worked
+  prerequisite-failures-match-manifest  what fails on a missing prerequisite agrees with what the manifest declares
+```
+
+Each reviewer works read-only in the tool's root and answers in a fixed shape, one finding per check. `unclear` is the honest answer when the evidence does not settle the question; a reviewer never guesses a verdict.
+
+```python
+class Finding(BaseModel):
+    id: str
+    status: Literal["adheres", "deviates", "not-applicable", "unclear"]
+    spec: str
+    evidence: list[str]
+    suggestion: str
+
+
+class SpecAdherenceReport(BaseModel):
+    root: Path
+    conformance: ConformanceReport
+    findings: list[Finding]
+    counts: dict[str, int]
+    deviating: list[str]
+    output_message: str
+```
+
+`evidence` is `path:line` references with a sentence each; `suggestion` is what to change, empty when the tool adheres. `findings` follow the checklist's order regardless of which reviewer finished first. `output_message` is the report for the calling agent, rendered from `capabilities/check_spec_adherence/output_message.md.liquid`: one line per finding, then each deviation with its spec sentence, evidence, and suggestion, then the counts.
+
+Raises `SmartToolCreatorError` when `directory` holds no `smart-tool.json`, an id in `checks` is not in the checklist (naming the ones that are), `uv` is not on `PATH`, the intelligence preflight fails, the kit produced no verdict, or a reviewer fails.
+
 ## Add smart capability
 
 Adds one model-backed capability to a smart tool that already exists. An agent works inside the tool's own repository: it reads the tool, implements the capability in the library, exposes it from the CLI, writes the tests and the documentation, then runs the tool's own checks and fixes what they report. Model-backed.

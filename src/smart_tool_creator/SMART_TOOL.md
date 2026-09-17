@@ -15,6 +15,15 @@ platforms:
   - macos
   - windows
 requires:
+  - name: uv
+    purpose: >
+      Installs the tool, runs its checks, and runs the conformance kit; every capability
+      needs it.
+    install: https://docs.astral.sh/uv/
+  - name: git
+    purpose: >
+      init creates the new tool's repository and clones its references.
+    install: https://git-scm.com/
   - name: gh
     purpose: >
       Generates the token that signs in to GitHub Copilot. Without it, the model-backed
@@ -49,6 +58,13 @@ thin wrapper over it, so anything you can do from the shell you can also do from
 - You built a smart tool and want to know whether it conforms to the spec before publishing it.
 - You want evidence that a smart tool's model-backed capabilities work, independent of the
   harness that calls it.
+
+Not for:
+
+- Generating a general-purpose project, or as a template engine.
+- Hosting or distributing smart tools; that is the catalog's job.
+- Making a smart tool discoverable inside a host like Copilot or Claude Code; the catalog's
+  skill does that.
 
 ## Before writing code
 

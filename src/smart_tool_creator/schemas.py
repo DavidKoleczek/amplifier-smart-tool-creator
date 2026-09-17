@@ -4,6 +4,8 @@ from typing import Literal, NamedTuple
 from pydantic import BaseModel, Field
 
 DEFAULT_INTELLIGENCE_MODEL = "gpt-6-astra"
+# A review reads much and writes little, so a faster model thinking harder beats a slower one.
+DEFAULT_REVIEW_MODEL = "gpt-5.6-terra"
 DEFAULT_PROBE_TIMEOUT_SECONDS = 20.0
 ReasoningEffort = Literal["low", "medium", "high", "xhigh", "max"]
 
@@ -101,6 +103,56 @@ class ConformanceReport(BaseModel):
     rules: list[ConformanceRule]
     output_message: str = Field(
         description="Every rule with its status and detail, then the verdict, for the calling agent"
+    )
+
+
+# endregion
+
+# region: Check spec adherence
+
+FindingStatus = Literal["adheres", "deviates", "not-applicable", "unclear"]
+
+
+class SpecCheck(BaseModel):
+    """One check of the checklist: a sentence of the spec and the guidance a reviewer judges it by."""
+
+    id: str
+    spec_file: str = Field(description="The spec chapter the sentence comes from")
+    spec: str = Field(description="The spec sentence the check operationalizes, quoted verbatim")
+    guidance: str = Field(description="The Markdown the reviewer reads for this check")
+
+
+class ReviewGroup(BaseModel):
+    """Checks whose evidence lives in the same files, so one reviewer answers them all in one pass."""
+
+    name: str
+    read_first: list[str] = Field(description="Where the group's evidence sits in a scaffolded tool")
+    guidance: str = Field(default="", description="Context the group's reviewer reads before its checks")
+    checks: list[SpecCheck]
+
+
+class Finding(BaseModel):
+    """One reviewer's answer to one check."""
+
+    id: str
+    status: FindingStatus = Field(
+        description="Whether the tool adheres, deviates, the check does not apply, or the evidence does not settle it"
+    )
+    spec: str = Field(description="The spec sentence the check operationalizes, taken from the checklist")
+    evidence: list[str] = Field(description="path:line references with a sentence each")
+    suggestion: str = Field(description="What to change, empty when the tool adheres")
+
+
+class SpecAdherenceReport(BaseModel):
+    """What check_spec_adherence produced: the kit's verdict, then a finding per check."""
+
+    root: Path = Field(description="The reviewed tool's distribution root")
+    conformance: ConformanceReport = Field(description="The conformance kit's verdict, which runs first")
+    findings: list[Finding] = Field(description="One per check, in the checklist's order; empty when the kit failed")
+    counts: dict[str, int] = Field(description="How many findings carry each status")
+    deviating: list[str] = Field(description="The ids of the checks the tool deviates from")
+    output_message: str = Field(
+        description="Every finding, then each deviation with its spec sentence and suggestion, for the calling agent"
     )
 
 

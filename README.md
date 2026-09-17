@@ -55,6 +55,12 @@ smart-tool-creator manifest
 # Scaffold a new smart tool into ./incident-postmortem, optionally with an Agent Skill and the repository it will be pushed to. Specify a specific directory with --directory
 smart-tool-creator init incident-postmortem --description "Writes, reviews, and tracks blameless postmortems from your incident platform's records" --skill --repository https://github.com/org/incident-postmortem
 
+# Run the conformance kit against a smart tool
+smart-tool-creator check-conformance --directory ./incident-postmortem
+
+# Review a smart tool against the parts of the spec the kit cannot decide, and get suggestions
+smart-tool-creator check-spec-adherence --directory ./incident-postmortem
+
 # Add one model-backed capability to an existing smart tool, verified against that tool's own checks
 smart-tool-creator add-smart-capability "Given an incident id, fetch its chat transcript and alert timeline from the incident platform and draft a blameless postmortem: summary, impact, contributing factors, and action items with owners" --directory ./incident-postmortem
 ```

@@ -61,19 +61,27 @@ def init(
     variables = _variables(name, description, intelligence, references, skill, repository, placeholder)
 
     files = sorted(file for source in sources for file in _render(source, root, variables))
-    _git(["init", "--initial-branch=main"], root, "Could not create the git repository")
+    _git(["init", "--initial-branch=main"], root, "Could not create the git repository; check that git can write here")
     if not placeholder:
-        _git(["remote", "add", "origin", repository], root, "Could not add the remote")
-    _run(["uv", "sync"], root, "Could not sync the new tool's environment")
+        _git(
+            ["remote", "add", "origin", repository],
+            root,
+            f"Could not add {repository} as the remote; check the URL",
+        )
+    _run(["uv", "sync"], root, "Could not sync the new tool's environment; check that uv can reach the package index")
     for reference in references:
         destination = Path("reference") / reference.rsplit("/", 1)[-1]
         _git(
             ["clone", "--depth", "1", "--single-branch", reference, str(destination)],
             root,
-            f"Could not clone the reference {reference}",
+            f"Could not clone the reference {reference}; check the network",
         )
-    _git(["add", "-A"], root, "Could not stage the new tool")
-    _git(["commit", "-m", f"Scaffold {name} with smart-tool-creator"], root, "Could not commit the new tool")
+    _git(["add", "-A"], root, "Could not stage the new tool; check that no other process holds git's index lock")
+    _git(
+        ["commit", "-m", f"Scaffold {name} with smart-tool-creator"],
+        root,
+        "Could not commit the new tool; check that git has a user.name and user.email",
+    )
     output_message = ENVIRONMENT.render(
         OUTPUT_MESSAGE_PATH.read_text(encoding="utf-8"),
         root=str(root),
@@ -198,7 +206,12 @@ def _git(arguments: list[str], root: Path, failure: str) -> None:
 def _run(command: list[str], root: Path, failure: str) -> None:
     completed = subprocess.run(command, cwd=root, capture_output=True, text=True, env=_clean_environment())
     if completed.returncode != 0:
-        raise SmartToolCreatorError(f"{failure}: {completed.stderr.strip() or completed.stdout.strip()}")
+        # Every one of these runs after the templates are rendered, so the root is always half-built by now
+        # and the next init would refuse it for being non-empty. Say so once, here, rather than per message.
+        raise SmartToolCreatorError(
+            f"{failure}: {completed.stderr.strip() or completed.stdout.strip()} "
+            f"The partial tool at {root} must be removed before init runs again."
+        )
 
 
 def _clean_environment() -> dict[str, str]:

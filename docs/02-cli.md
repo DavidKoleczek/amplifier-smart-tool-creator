@@ -43,6 +43,17 @@ smart-tool-creator check-conformance [--directory PATH] [--timeout 20]
 Prints the result's `output_message`: one line per rule with the kit's status and detail, the verdict with its counts, and the spec sentence behind each failing rule. 
 Exits 1 when the verdict is `FAIL`.
 
+## smart-tool-creator check-spec-adherence
+
+```bash
+smart-tool-creator check-spec-adherence [--directory PATH] [--check ID]... [--model gpt-5.6-terra] [--reasoning-effort high]
+```
+
+`lib.check_spec_adherence(directory, checks, ...)` with `--check` repeated once per id. 
+Prints the result's `output_message`: one line per finding, each deviation with its spec sentence, evidence, and suggestion, and the counts. 
+When the conformance kit fails, prints the kit's report and the instruction to fix it first instead. 
+Exits 1 in either case: the kit failed, or any finding deviates.
+
 ## smart-tool-creator add-smart-capability
 
 ```bash

@@ -15,6 +15,7 @@ from smart_tool_creator import lib
 from smart_tool_creator.schemas import (
     DEFAULT_INTELLIGENCE_MODEL,
     DEFAULT_PROBE_TIMEOUT_SECONDS,
+    DEFAULT_REVIEW_MODEL,
     IntelligenceLayer,
     Language,
     ReasoningEffort,
@@ -158,6 +159,33 @@ def check_conformance(
     report = lib.check_conformance(directory=directory, timeout=timeout)
     typer.echo(report.output_message)
     if report.verdict == "FAIL":
+        raise typer.Exit(1)
+
+
+@app.command()
+def check_spec_adherence(
+    directory: Annotated[
+        Path | None,
+        typer.Option("--directory", help="The smart tool's distribution root; the current directory when omitted."),
+    ] = None,
+    check: Annotated[
+        list[str] | None,
+        typer.Option("--check", help="Repeatable; a check id to review, from the checklist; every check when omitted."),
+    ] = None,
+    model: Annotated[str, typer.Option("--model", help="The model the reviewers run on.")] = DEFAULT_REVIEW_MODEL,
+    reasoning_effort: Annotated[
+        ReasoningEffort, typer.Option("--reasoning-effort", help="How hard the model thinks before it answers.")
+    ] = "high",
+) -> None:
+    """Review a smart tool against the parts of the spec the conformance kit cannot decide, and suggest fixes. Model-backed: runs through GitHub Copilot, signed in as the GitHub CLI's user."""
+    report = lib.check_spec_adherence(
+        directory=directory,
+        checks=check,
+        model=model,
+        reasoning_effort=reasoning_effort,
+    )
+    typer.echo(report.output_message)
+    if report.conformance.verdict == "FAIL" or report.deviating:
         raise typer.Exit(1)
 
 

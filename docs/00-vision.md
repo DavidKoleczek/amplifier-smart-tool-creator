@@ -11,7 +11,7 @@ This tool takes expertise someone holds in a harness, a bundle, or a set of skil
   - A choice of language, intelligence layer, and optional surfaces is made at scaffold time
   - The tool could change language, add intelligence layers, add surfaces or capabilities after the fact.
 - Validating a smart tool against the spec is one command
-  - The conformance kit runs as is, and critique against the spec's principles is a model-backed capability alongside it
+  - The conformance kit runs as is, and critique against the spec's principles is a model-backed capability built on it: the kit's rules are settled first, and the critique covers only what a machine cannot decide
 - The smart capabilities of a smart tool can be evaluated in isolation
   - A tool that proves itself here is known to work before it is shared, so a problem in a host is a problem with the host
 - Adding a smart tool to the catalog is one command

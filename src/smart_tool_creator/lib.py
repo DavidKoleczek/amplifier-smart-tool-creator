@@ -4,6 +4,8 @@ from pathlib import Path
 
 from smart_tool_creator.capabilities.add_smart_capability import capability
 from smart_tool_creator.capabilities.check_conformance import capability as conformance
+from smart_tool_creator.capabilities.check_spec_adherence import capability as adherence
+from smart_tool_creator.capabilities.check_spec_adherence import checks as adherence_checks
 from smart_tool_creator.capabilities.init import scaffold
 from smart_tool_creator.core import manifest
 from smart_tool_creator.core import skill as skill_module
@@ -11,13 +13,16 @@ from smart_tool_creator.intelligence.interface import Intelligence
 from smart_tool_creator.schemas import (
     DEFAULT_INTELLIGENCE_MODEL,
     DEFAULT_PROBE_TIMEOUT_SECONDS,
+    DEFAULT_REVIEW_MODEL,
     AddedCapability,
     ConformanceReport,
     IntelligenceLayer,
     Language,
     Manifest,
     ReasoningEffort,
+    ReviewGroup,
     Scaffold,
+    SpecAdherenceReport,
 )
 
 
@@ -84,6 +89,32 @@ def check_conformance(
     `timeout` bounds each invocation the kit makes of the tool, in seconds.
     """
     return conformance.check_conformance(directory=directory, timeout=timeout)
+
+
+def check_spec_adherence(
+    directory: Path | None = None,
+    checks: list[str] | None = None,
+    model: str = DEFAULT_REVIEW_MODEL,
+    reasoning_effort: ReasoningEffort = "high",
+    intelligence: Intelligence | None = None,
+) -> SpecAdherenceReport:
+    """Review a smart tool against the parts of the spec the conformance kit cannot decide, and suggest fixes.
+
+    The kit runs first: when it fails, no reviewer runs and the report says to fix the failing rules.
+    `checks` names the ids to review, from the checklist `spec_checks()` returns.
+    """
+    return adherence.check_spec_adherence(
+        directory=directory,
+        checks=checks,
+        model=model,
+        reasoning_effort=reasoning_effort,
+        intelligence=intelligence,
+    )
+
+
+def spec_checks() -> list[ReviewGroup]:
+    """The checklist check_spec_adherence reviews against, group by group, without running anything."""
+    return adherence_checks.review_groups()
 
 
 def add_smart_capability(

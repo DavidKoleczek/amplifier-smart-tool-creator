@@ -42,6 +42,8 @@ added.report, added.checks, added.fix_rounds, added.output_message
 - `--model`: the model the agent runs on. Defaults to `gpt-6-astra`.
 - `--reasoning-effort`: how hard the model thinks before it acts, one of `low` (the default),
   `medium`, `high`, `xhigh`, `max`.
+- `intelligence`, library only: the `Intelligence` implementation the agent runs through;
+  `default_intelligence()` when omitted. Tests inject a fake.
 
 ## Result
 
