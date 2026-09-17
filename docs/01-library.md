@@ -122,6 +122,42 @@ Raises `SmartToolCreatorError` when `name` is not a slug, `directory` is not emp
 
 - `copilot-sdk`: the [GitHub Copilot SDK](https://github.com/github/copilot-sdk), signed in through the GitHub CLI.
 
+## Check conformance
+
+Runs the spec's [conformance kit](https://github.com/microsoft/amplifier-smart-tools/tree/main/conformance) against a smart tool and returns its verdict as the kit gave it. 
+The kit is the spec repository's, fetched on each run and never vendored, so what this reports is what the spec says. Deterministic.
+
+```python
+def check_conformance(directory: Path | None = None, timeout: float = DEFAULT_PROBE_TIMEOUT_SECONDS) -> ConformanceReport
+```
+
+- `directory`: the tool's distribution root; the current directory when omitted. Whether it holds a smart tool is the kit's call, so a root without a `smart-tool.json` fails `descriptor-present` rather than raising.
+- `timeout`: seconds the kit allows each invocation it makes of the tool. `20.0` by default.
+
+The kit is run from the tool's root with `uv run --no-project`, which resolves its inline dependencies; a root holding a `pyproject.toml` is wrapped in `uv run --` so the tool's own console script is on `PATH`, since the kit never installs the tool under test. The kit's JSON verdict on stdout is parsed into the report; its ids, statuses, and spec sentences are kept as is.
+
+```python
+class ConformanceRule(BaseModel):
+    id: str
+    status: Literal["PASS", "FAIL", "SKIP"]
+    spec: str
+    detail: str
+
+
+class ConformanceReport(BaseModel):
+    root: Path
+    verdict: Literal["PASS", "FAIL"]
+    counts: dict[str, int]
+    failed_rules: list[str]
+    rules: list[ConformanceRule]
+    output_message: str
+```
+
+`verdict` is `FAIL` when any rule failed; a `SKIP` carries the reason the rule could not be evaluated and never fails a tool. 
+`output_message` is the report for the calling agent, rendered from `capabilities/check_conformance/output_message.md.liquid`: one line per rule, the verdict with its counts, and, when rules failed, each one's spec sentence.
+
+Raises `SmartToolCreatorError` when `directory` is not a directory, `uv` is not on `PATH`, or the kit produced no verdict: the network, uv failing to run it, or its output contract changing. The message carries the command to rerun by hand and the kit's stderr.
+
 ## Add smart capability
 
 Adds one model-backed capability to a smart tool that already exists. An agent works inside the tool's own repository: it reads the tool, implements the capability in the library, exposes it from the CLI, writes the tests and the documentation, then runs the tool's own checks and fixes what they report. Model-backed.
@@ -143,7 +179,7 @@ def add_smart_capability(
 - `model` and `reasoning_effort`: the agent behind the work. Effort is one of `low`, `medium`, `high`, `xhigh`, `max`.
 - `intelligence`: the implementation to run through; `default_intelligence()` when omitted. Tests inject a fake.
 
-After the agent finishes, the tool's own checks run in its root: `uv run pytest`, `prek run --all-files`, and the conformance kit. The prek check is `skipped`, never failed, when the tool has no `.pre-commit-config.yaml` or `prek` is not on `PATH`. While any check fails, another agent run gets the failing commands and their output and fixes them, up to `MAX_FIX_ROUNDS` (2). Each fix round continues the implementation run's session, so the agent still has the work it just did in context. Checks still failing after that are returned, not raised: the caller decides what the partial work is worth.
+After the agent finishes, the tool's own checks run in its root: `uv run pytest`, `prek run --all-files`, and the conformance kit through `check_conformance`. The prek check is `skipped`, never failed, when the tool has no `.pre-commit-config.yaml` or `prek` is not on `PATH`; the conformance check is `skipped` when the kit itself could not run, and when it fails its output is the failing rules with their details and spec sentences. While any check fails, another agent run gets the failing commands and their output and fixes them, up to `MAX_FIX_ROUNDS` (2). Each fix round continues the implementation run's session, so the agent still has the work it just did in context. Checks still failing after that are returned, not raised: the caller decides what the partial work is worth.
 
 ```python
 class Check(BaseModel):

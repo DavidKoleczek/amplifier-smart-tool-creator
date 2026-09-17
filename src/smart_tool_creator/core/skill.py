@@ -18,6 +18,12 @@ CAPABILITIES = (
         skill="capabilities/init/SKILL.md",
     ),
     Capability(
+        "check-conformance",
+        "Run the spec's conformance kit against a smart tool and return its verdict, rule by rule.",
+        model_backed=False,
+        skill="capabilities/check_conformance/SKILL.md",
+    ),
+    Capability(
         "add-smart-capability",
         "Add one model-backed capability to an existing smart tool, verified against that tool's own checks.",
         model_backed=True,

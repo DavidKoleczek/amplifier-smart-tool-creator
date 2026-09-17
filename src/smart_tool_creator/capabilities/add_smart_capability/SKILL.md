@@ -53,7 +53,8 @@ when it was skipped; `fix_rounds`, the extra agent runs spent on failing checks,
 and `output_message`, all of that for the calling agent, which is what the CLI prints.
 
 The prek check is skipped, never failed, when the tool has no `.pre-commit-config.yaml` or
-`prek` is not on `PATH`. A check still failing when the work stops is returned rather than
+`prek` is not on `PATH`; the conformance check is skipped when the kit itself could not run,
+and names the failing rules when it fails. A check still failing when the work stops is returned rather than
 raised and named in the message, and the CLI exits 1; the work stays in the tool's working
 tree either way, and what it is worth is the caller's call.
 

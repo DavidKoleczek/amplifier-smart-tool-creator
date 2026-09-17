@@ -3,13 +3,16 @@
 from pathlib import Path
 
 from smart_tool_creator.capabilities.add_smart_capability import capability
+from smart_tool_creator.capabilities.check_conformance import capability as conformance
 from smart_tool_creator.capabilities.init import scaffold
 from smart_tool_creator.core import manifest
 from smart_tool_creator.core import skill as skill_module
 from smart_tool_creator.intelligence.interface import Intelligence
 from smart_tool_creator.schemas import (
     DEFAULT_INTELLIGENCE_MODEL,
+    DEFAULT_PROBE_TIMEOUT_SECONDS,
     AddedCapability,
+    ConformanceReport,
     IntelligenceLayer,
     Language,
     Manifest,
@@ -71,6 +74,16 @@ def init(
         skill=skill,
         repository=repository,
     )
+
+
+def check_conformance(
+    directory: Path | None = None, timeout: float = DEFAULT_PROBE_TIMEOUT_SECONDS
+) -> ConformanceReport:
+    """Run the spec's conformance kit against a smart tool and return its verdict, rule by rule.
+
+    `timeout` bounds each invocation the kit makes of the tool, in seconds.
+    """
+    return conformance.check_conformance(directory=directory, timeout=timeout)
 
 
 def add_smart_capability(
