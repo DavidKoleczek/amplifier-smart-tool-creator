@@ -23,9 +23,9 @@ def load_manifest() -> Manifest:
     return manifest.load_manifest()
 
 
-def skill() -> str:
-    """The tool's skill: the manifest body and the capability list, wrapped so a reader knows where its files are."""
-    return skill_module.skill()
+def skill(capability: str | None = None) -> str:
+    """The tool's skill, or the named capability's own skill, wrapped so a reader knows where the tool's files are."""
+    return skill_module.skill(capability)
 
 
 def skill_directory() -> Path:
@@ -36,6 +36,11 @@ def skill_directory() -> Path:
 def skill_resources() -> list[str]:
     """The files the skill lists, as paths relative to the skill directory. Every one ships inside the package."""
     return skill_module.skill_resources()
+
+
+def capability_skill_resources(capability: str) -> list[str]:
+    """The files that capability's skill lists, as paths relative to the skill directory."""
+    return skill_module.capability_skill_resources(capability)
 
 
 def repository_url() -> str | None:

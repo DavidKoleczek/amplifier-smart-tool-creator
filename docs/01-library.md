@@ -33,11 +33,29 @@ def load_manifest() -> Manifest
 ## Skill
 
 What an agent reads once it has decided to drive the tool: the manifest body and the capability list, wrapped so the reader knows where the tool's files are. 
-The CLI's `--help` prints exactly this.
+Naming a capability returns that capability's own skill instead: the same wrapper, a heading carrying the capability's name, whether it is deterministic or model-backed, and the Markdown beside its code, which covers its arguments, a worked invocation, its result, and its failures. 
+The CLI's `--help` prints exactly this, the tool's at the root and the capability's on a command. 
+Raises `SmartToolCreatorError` when the name is not a capability, naming the ones that are.
 
 ```python
-def skill() -> str
+def skill(capability: str | None = None) -> str
 ```
+
+The capabilities the skill lists, one entry each, driven by the same table the CLI is built from:
+
+```python
+class Capability(NamedTuple):
+    name: str
+    summary: str
+    model_backed: bool
+    skill: str
+    resources: tuple[str, ...] = ()
+```
+
+- `name` and `summary`: the command's name and its line in the tool's capability list.
+- `model_backed`: whether it runs through the `Intelligence` interface, which decides the kind shown in both skills.
+- `skill`: the capability's skill body, a Markdown file relative to `skill_directory()`, written without frontmatter, title, or kind line because the renderer supplies them.
+- `resources`: the files that body refers to, relative to `skill_directory()`, listed under `<skill_resources>` in the capability's skill. The block is omitted when there are none.
 
 The installed package root, resolved at runtime, where the files the skill names can be read.
 
@@ -45,10 +63,14 @@ The installed package root, resolved at runtime, where the files the skill names
 def skill_directory() -> Path
 ```
 
-The files the skill lists under `<skill_resources>`, as paths relative to `skill_directory()`. Every one ships inside the package, so each resolves after installation.
+The files the skill lists under `<skill_resources>`, as paths relative to `skill_directory()`. Every one ships inside the package, so each resolves after installation. 
+The second does the same for one capability's skill, and raises `SmartToolCreatorError` when the name is not a capability.
 
 ```python
 def skill_resources() -> list[str]
+
+
+def capability_skill_resources(capability: str) -> list[str]
 ```
 
 The tool's canonical source, read from the package metadata's `[project.urls]` `Repository` entry, or `None` when the package declares none. 

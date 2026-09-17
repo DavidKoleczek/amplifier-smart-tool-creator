@@ -5,8 +5,8 @@ You are extending the smart tool at {{ root }}. It follows the Amplifier Smart T
 1. `AGENTS.md`, for how this repository expects to be worked in
 2. `CONTRIBUTING.md`, for the exact lint, type check, test, and conformance commands
 3. `docs/00-vision.md`, for what the tool is and is not
-4. the `SMART_TOOL.md` under `src/`, for the manifest and the worked invocations
-5. `lib.py` and `cli.py`, for the shape every capability already takes
+4. the `SMART_TOOL.md` under `src/`, for the manifest and the body the tool's skill renders
+5. `lib.py`, `cli.py`, and the `SKILL.md` beside an existing capability, for the shape every capability already takes
 6. the `intelligence/` package, for the interface a model-backed capability runs through
 7. the existing tests, for how they fake the intelligence
 8. `reference/`, when it is there: the spec and the SDK, to read rather than recall
@@ -32,7 +32,9 @@ One model-backed capability, complete:
 - a thin command in `cli.py` whose help text says it is model-backed. Argument parsing and I/O only; capability that exists only in the wrapper is a defect.
 - the library function takes `model: str = DEFAULT_INTELLIGENCE_MODEL` and `reasoning_effort: ReasoningEffort = "low"` from the tool's `schemas.py`, and the command exposes both as `--model` and `--reasoning-effort`. If `schemas.py` has no `DEFAULT_INTELLIGENCE_MODEL`, add it there set to `{{ default_model }}`.
 - tests that inject a fake `Intelligence`, so they pass with no model provider configured.
-- sections in `docs/01-library.md` and `docs/02-cli.md`, a worked invocation in `SMART_TOOL.md`, an entry in the capability list the skill renders (`core/skill.py` `CAPABILITIES`, or this tool's equivalent), and `skills/<name>/SKILL.md` when the tool ships one.
+- the capability's own skill at `capabilities/<name>/SKILL.md`, beside its code: what it does and when to use it, every argument and what it is for, a worked CLI invocation and a worked Python one, what it returns, and how it fails. Body only, with no title and no deterministic or model-backed line, because the library renders those. Register it on the capability's row in the capability list the skill renders (`core/skill.py` `CAPABILITIES`, or this tool's equivalent) through `skill=`.
+- `<tool> <name> --help` prints that skill and `<tool> <name> -h` the terse generated table, which the tool's `tests/test_skill.py` enumerates over every capability.
+- sections in `docs/01-library.md` and `docs/02-cli.md`, and `skills/<name>/SKILL.md` when the tool ships one.
 
 ## Models
 

@@ -7,6 +7,7 @@ This is a Smart Tool that must conform to Microsoft's [Amplifier Smart Tool Spec
 - `docs/00-vision.md` is the source of truth for what this tool is and is not. Then `README.md` and `CONTRIBUTING.md`, then the rest of `docs/`. When work changes any of them, propose the doc updates at the end and call out contradictions.
 - The library is the tool. Every capability lives in the library and is reachable from `lib.py`. The CLI and any other surface are thin wrappers: argument parsing and I/O conventions, then a call into the library. Capability that exists only in a wrapper is a defect.
 - Deterministic capabilities run with no model provider configured. Model-backed capabilities go through the `Intelligence` interface, never an SDK directly, and their help text says they are model-backed.
+- A capability is its code, a row in `CAPABILITIES`, and a `SKILL.md` beside that code carrying its arguments, a worked invocation, its result, and its failures. `<command> --help` renders that skill, `<command> -h` stays the terse generated summary, and the tool's own skill stays a router pointing at both.
 - Failures name what went wrong and how to fix it. The caller is usually an agent.
 - Never modify this file unless explictly told.
 
