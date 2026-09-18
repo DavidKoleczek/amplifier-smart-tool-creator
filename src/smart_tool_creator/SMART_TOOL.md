@@ -26,16 +26,20 @@ requires:
     install: https://git-scm.com/
   - name: gh
     purpose: >
-      Generates the token that signs in to GitHub Copilot. Without it, the model-backed
-      capabilities cannot authenticate.
+      Generates the token for the default Copilot backend. Not needed for other Amplifier providers.
     optional: true
     install: https://cli.github.com/
   - name: github-copilot-subscription
     purpose: >
-      A Copilot subscription on the account signed in to gh powers the model-backed
-      capabilities. Without it, only the deterministic capabilities run.
+      Powers the Copilot backend. Other Amplifier providers use their own credentials.
     optional: true
     install: https://github.com/github/copilot-cli#prerequisites
+  - name: amplifier-provider
+    purpose: >-
+      The amplifier extra and explicit provider/model credentials enable the optional
+      Amplifier backend. Without them that backend fails with setup instructions.
+    optional: true
+    install: https://github.com/microsoft/amplifier-agent/blob/v0.17.0/docs/CONFIGURATION.md
   - name: prek
     purpose: >
       Runs the lint and format checks of the tool being extended by add-smart-capability.
@@ -90,14 +94,20 @@ Verify with `smart-tool-creator manifest`, which needs no credentials.
 
 ## Prerequisites
 
-Deterministic capabilities need only `uv`. Model-backed capabilities run through GitHub
+Deterministic capabilities need `uv` and, for scaffolding, `git`. By default model-backed capabilities run through GitHub
 Copilot, signed in as the GitHub CLI's user: `gh` must be installed and `gh auth login`
 completed with an account that has a Copilot subscription. Runs on Linux, macOS, and Windows.
+
+Alternatively install this package with the `[amplifier]` extra and pass
+`--backend amplifier-agent --provider NAME --model MODEL` to either model-backed command.
+Set the provider's environment credentials or use `amplifier-agent auth`. First use may
+download runtime modules. No credentials or Agent import are needed by manifest/help/init.
+`init --intelligence amplifier-agent` chooses the generated tool's SDK, not Creator's backend.
 
 ## Straight and smart paths
 
 Deterministic capabilities run with no provider configured. Model-backed capabilities go
-through GitHub Copilot, signed in as the GitHub CLI's user, and say so in their help text.
+through the selected backend and say so in their help text.
 A model-backed capability with nothing configured fails immediately and names what to set;
 it never falls back to a deterministic answer.
 

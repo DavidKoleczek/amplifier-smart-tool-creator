@@ -1,0 +1,23 @@
+"""The contract every model-backed capability runs through."""
+
+from typing import Protocol
+
+from {{ package }}.intelligence.schemas import AgentRequest, AgentResult
+
+
+class Intelligence(Protocol):
+    implementation: str
+
+    def preflight(self) -> None:
+        """Raise {{ error_class }} with an actionable configuration remedy."""
+        ...
+
+    def run(self, request: AgentRequest) -> AgentResult:
+        """Return a validated structured output or an error when a schema is supplied."""
+        ...
+
+
+def default_intelligence(provider: str | None = None) -> Intelligence:
+    from {{ package }}.intelligence.amplifier import AmplifierIntelligence
+
+    return AmplifierIntelligence(provider=provider)

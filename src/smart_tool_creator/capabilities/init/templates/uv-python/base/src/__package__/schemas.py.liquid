@@ -2,7 +2,7 @@ from typing import Literal, NamedTuple
 
 from pydantic import BaseModel, Field
 
-DEFAULT_INTELLIGENCE_MODEL = "gpt-6-astra"
+DEFAULT_INTELLIGENCE_MODEL = "{% if intelligence == "copilot-sdk" %}gpt-6-astra{% endif %}"
 ReasoningEffort = Literal["low", "medium", "high", "xhigh", "max"]
 
 SEMVER_PATTERN = r"^\d+\.\d+\.\d+$"

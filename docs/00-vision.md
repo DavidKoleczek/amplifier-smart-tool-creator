@@ -27,7 +27,7 @@ This tool takes expertise someone holds in a harness, a bundle, or a set of skil
 ## Principles
 
 - The library is the tool. The CLI and any other surface are thin wrappers over it.
-- The intelligence is implemented using the GitHub Copilot SDK first, but amplifier-agent and others will come soon. It is behind an interface so another implementation is a new module, not a rewrite.
+- The intelligence is implemented using the GitHub Copilot SDK by default, with amplifier-agent as another choice. It is behind an interface so another implementation is a new module, not a rewrite.
 - Deterministic paths run with no model provider configured.
 - The tool works on Windows, macOS, and Linux seamlessly.
 

@@ -31,6 +31,15 @@ added.report, added.checks, added.fix_rounds, added.output_message
 
 ## Arguments
 
+- `--backend`: Creator's runtime, `copilot-sdk` (default) or `amplifier-agent`.
+- `--provider`: required with Amplifier, along with an explicit `--model`. For example:
+  `add-smart-capability "Summarize a changelog" --backend amplifier-agent --provider anthropic --model claude-sonnet-4-6`.
+  Install the `[amplifier]` extra and configure that provider's environment credentials or
+  `amplifier-agent auth`. Copilot defaults below do not apply to Amplifier.
+  Library callers use `lib.create_intelligence("amplifier-agent", provider="anthropic")`.
+  Amplifier fix rounds reuse the same adapter and transcript. Writable runs may execute
+  host shell commands; this is not an OS sandbox.
+
 - `REQUEST`: the whole brief for one capability: what it does, for whom, and what it takes in
   and gives back. Required.
 - `--directory PATH`: the smart tool to work in; the current directory when omitted. It must
@@ -62,7 +71,7 @@ tree either way, and what it is worth is the caller's call.
 
 ## Failures
 
-Model-backed: it runs through GitHub Copilot, signed in as the GitHub CLI's user, so `gh`
+Model-backed: by default it runs through GitHub Copilot, signed in as the GitHub CLI's user, so `gh`
 must be installed and `gh auth login` completed with an account that has a Copilot
 subscription. With nothing configured it fails immediately and names what to set; it never
 falls back to a deterministic answer.

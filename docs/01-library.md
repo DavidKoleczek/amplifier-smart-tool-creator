@@ -22,6 +22,35 @@ Setting `AgentRequest.resume` to an earlier `AgentResult.session_id` continues t
 `default_intelligence()` returns the shipped implementation, `CopilotIntelligence`, built on the [GitHub Copilot SDK](https://github.com/github/copilot-sdk) and signed in through the GitHub CLI. 
 Another implementation is a module satisfying the protocol and a branch in that factory.
 
+`lib.create_intelligence(backend="copilot-sdk", provider=None)` exposes the same factory.
+Select `amplifier-agent` explicitly, then pass the adapter through the existing injection seam:
+
+```python
+from smart_tool_creator import lib
+
+intelligence = lib.create_intelligence("amplifier-agent", provider="anthropic")
+report = lib.check_spec_adherence(model="claude-sonnet-4-6", intelligence=intelligence)
+```
+
+Install the `[amplifier]` extra. The adapter pins Agent v0.17.0 from Git and requires a named
+provider and model, using Agent's environment/credential-file resolution. It never imports
+Agent in the host process. Calls on one adapter are serialized (including parallel spec
+reviewers) and each call embeds the Engine in a worker process, isolating Agent's global
+environment and runtime state. The timeout includes queue waiting and model work, with up
+to five seconds of process-cleanup grace.
+
+Transcripts are kept in a temporary directory for the adapter's lifetime. Resume on the same
+adapter with the same workspace and write permission; missing history is an error, never a
+fresh session disguised as a resume. Completed turns and schema-repair turns retain context.
+Interrupted turns do not checkpoint partial history. Model reasoning effort is forwarded to
+the provider, whose support for it varies.
+
+Plain completions have no tools except `submit` when a schema is requested. Read-only
+workspaces expose only a path-confined file/directory reader. Writable workspaces also expose
+file writing and host shell commands. Shell commands are **not sandboxed**; grant writes
+only on trusted repositories. No inherited hooks, delegation, MCP, or default tools are
+mounted. Schema submission is validated, with at most two repair turns; failures are data.
+
 ## Manifest
 
 The tool's `SMART_TOOL.md` as structured data: the frontmatter as fields, the Markdown below it as `Manifest.body`.
@@ -121,6 +150,7 @@ Raises `SmartToolCreatorError` when `name` is not a slug, `directory` is not emp
 ### Intelligence layers
 
 - `copilot-sdk`: the [GitHub Copilot SDK](https://github.com/github/copilot-sdk), signed in through the GitHub CLI.
+- `amplifier-agent`: the [Amplifier Agent](https://github.com/microsoft/amplifier-agent) library, pinned at v0.17.0, with an explicit provider/model.
 
 ## Check conformance
 

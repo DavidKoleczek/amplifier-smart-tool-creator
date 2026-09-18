@@ -12,6 +12,14 @@ platforms:
   - macos
   - windows
 requires:
+{% if intelligence == "amplifier-agent" %}
+  - name: amplifier-provider
+    purpose: >-
+      Model-backed capabilities need explicit provider/model selection and credentials.
+      Without them those capabilities fail with setup instructions; deterministic paths run.
+    optional: true
+    install: https://github.com/microsoft/amplifier-agent/blob/v0.17.0/docs/CONFIGURATION.md
+{% else %}
   - name: gh
     purpose: >-
       Generates the token that signs in to GitHub Copilot. Without it, the model-backed
@@ -24,6 +32,7 @@ requires:
       capabilities. Without it, only the deterministic capabilities run.
     optional: true
     install: https://github.com/github/copilot-cli#prerequisites
+{% endif %}
 ---
 
 {{ description }}.
@@ -58,18 +67,27 @@ Verify with `{{ name }} manifest`, which needs no credentials.
 
 ## Prerequisites
 
+{% if intelligence == "amplifier-agent" -%}
+Deterministic capabilities need only `uv`. Model-backed capabilities use the pinned
+Amplifier Agent dependency. Supply a provider and model explicitly, with that provider's
+environment credentials or `amplifier-agent auth` setup. First use may download runtime
+modules. Credentials are not inherited from the calling agent; no GitHub CLI is required
+unless your selected provider needs it. Missing prerequisites fail with a remedy, never a
+deterministic fallback.
+{% else -%}
 Deterministic capabilities need only `uv`. Model-backed capabilities run through GitHub
 Copilot, signed in as the GitHub CLI's user: `gh` must be installed and `gh auth login`
 completed with an account that has a Copilot subscription. Without that, a model-backed
 capability fails immediately and names what to configure; it never falls back to a
 deterministic answer.
+{% endif %}
 
 Runs on Linux, macOS, and Windows.
 
 ## Straight and smart paths
 
 Deterministic capabilities run with no provider configured. Model-backed capabilities go
-through GitHub Copilot, signed in as the GitHub CLI's user, and say so in their help text.
+through {% if intelligence == "amplifier-agent" %}Amplifier Agent with an explicit provider/model{% else %}GitHub Copilot, signed in as the GitHub CLI's user{% endif %}, and say so in their help text.
 
 ## Output and failure contract
 

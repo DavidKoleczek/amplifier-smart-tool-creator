@@ -22,11 +22,19 @@ PYTHON_VERSION = "3.13"
 
 BASE_DEPENDENCIES = ["pydantic>=2.13,<3.0", "pyyaml>=6.0.3,<7.0.0", "typer>=0.27.2,<0.28.0"]
 INTELLIGENCE_DEPENDENCIES: dict[str, list[str]] = {
-    "copilot-sdk": ["github-copilot-sdk>=1.0.13,<2.0.0", "jsonschema>=4.26.0,<5.0.0"]
+    "copilot-sdk": ["github-copilot-sdk>=1.0.13,<2.0.0", "jsonschema>=4.26.0,<5.0.0"],
+    "amplifier-agent": [
+        "amplifier-agent @ git+https://github.com/microsoft/amplifier-agent@v0.17.0",
+        "jsonschema>=4.26.0,<5.0.0",
+    ],
 }
 
 SPEC_REPOSITORY = "https://github.com/microsoft/amplifier-smart-tools"
-INTELLIGENCE_REPOSITORIES: dict[str, str] = {"copilot-sdk": "https://github.com/github/copilot-sdk"}
+INTELLIGENCE_REPOSITORIES: dict[str, str] = {
+    "copilot-sdk": "https://github.com/github/copilot-sdk",
+    "amplifier-agent": "https://github.com/microsoft/amplifier-agent",
+}
+REFERENCE_REVISIONS = {"https://github.com/microsoft/amplifier-agent": "v0.17.0"}
 SKILL_REPOSITORY = "https://github.com/agentskills/agentskills"
 # Stands in for the tool's remote until there is one, so every install instruction is already in its final shape.
 PLACEHOLDER_REPOSITORY = "https://github.com/<owner>/{name}"
@@ -50,6 +58,8 @@ def init(
     if repository is not None:
         repository = repository.strip().rstrip("/").removesuffix(".git")
     _preflight(name, description, root, repository)
+    if intelligence not in INTELLIGENCE_DEPENDENCIES or language != "uv-python":
+        raise SmartToolCreatorError("Choose uv-python with copilot-sdk or amplifier-agent.")
     placeholder = repository is None
     if repository is None:
         repository = PLACEHOLDER_REPOSITORY.format(name=name)
@@ -71,8 +81,10 @@ def init(
     _run(["uv", "sync"], root, "Could not sync the new tool's environment; check that uv can reach the package index")
     for reference in references:
         destination = Path("reference") / reference.rsplit("/", 1)[-1]
+        revision = REFERENCE_REVISIONS.get(reference)
+        revision_args = ["--branch", revision] if revision else []
         _git(
-            ["clone", "--depth", "1", "--single-branch", reference, str(destination)],
+            ["clone", "--depth", "1", "--single-branch", *revision_args, reference, str(destination)],
             root,
             f"Could not clone the reference {reference}; check the network",
         )
@@ -87,7 +99,6 @@ def init(
         root=str(root),
         files=[str(file) for file in files],
         language=language,
-        intelligence=intelligence,
         **variables,
     ).rstrip()
     return Scaffold(root=root, files=files, references=references, output_message=output_message)
@@ -157,11 +168,33 @@ def _variables(
         "version": INITIAL_VERSION,
         "python_version": PYTHON_VERSION,
         "dependencies": sorted(BASE_DEPENDENCIES + INTELLIGENCE_DEPENDENCIES[intelligence]),
+        "intelligence": intelligence,
         "references": references,
+        "reference_revisions": json.dumps(
+            {url: revision for url, revision in REFERENCE_REVISIONS.items() if url in references}
+        ),
         "skill": skill,
         "repository": repository,
         "placeholder": placeholder,
         "skill_source": _skill_source(repository),
+        **(_amplifier_sources(package, f"{title.replace(' ', '')}Error") if intelligence == "amplifier-agent" else {}),
+    }
+
+
+def _amplifier_sources(package: str, error_class: str) -> dict[str, str]:
+    """Ship the tested adapter unchanged except for the generated package's names."""
+    source = Path(__file__).parents[2] / "intelligence"
+    return {
+        f"amplifier_{name}": (source / f"{name}.py")
+        .read_text(encoding="utf-8")
+        .replace("smart_tool_creator", package)
+        .replace("SmartToolCreatorError", error_class)
+        .replace(
+            "Install this tool's amplifier extra: `uv sync --extra amplifier` "
+            '"\n                "(or reinstall with `[amplifier]` in the package requirement).',
+            "Run `uv sync` in the tool's checkout to install its pinned dependency.",
+        )
+        for name in ("amplifier", "amplifier_worker", "schemas")
     }
 
 

@@ -30,7 +30,7 @@ One model-backed capability, complete:
 
 - the capability's code in `capabilities/<name>/capability.py`, or this tool's equivalent layout, with its prompt templates beside it, and a facade function in `lib.py` that imports it. The capability goes through the tool's `Intelligence` interface, never an SDK directly. Its preflight failure names exactly what to configure, and it never falls back to a deterministic answer.
 - a thin command in `cli.py` whose help text says it is model-backed. Argument parsing and I/O only; capability that exists only in the wrapper is a defect.
-- the library function takes `model: str = DEFAULT_INTELLIGENCE_MODEL` and `reasoning_effort: ReasoningEffort = "low"` from the tool's `schemas.py`, and the command exposes both as `--model` and `--reasoning-effort`. If `schemas.py` has no `DEFAULT_INTELLIGENCE_MODEL`, add it there set to `{{ default_model }}`.
+- follow the target tool's intelligence configuration, not Creator's backend. For Amplifier Agent, require explicit provider and model selection in the library and command (`--provider`, `--model`); do not add a model default or use an empty `DEFAULT_INTELLIGENCE_MODEL`. For Copilot SDK, the library function takes `model: str = DEFAULT_INTELLIGENCE_MODEL` from the tool's `schemas.py`, exposed as `--model`; if the constant is absent, add it set to `{{ default_model }}`. Both expose `reasoning_effort: ReasoningEffort = "low"` as `--reasoning-effort`.
 - tests that inject a fake `Intelligence`, so they pass with no model provider configured.
 - the capability's own skill at `capabilities/<name>/SKILL.md`, beside its code: what it does and when to use it, every argument and what it is for, a worked CLI invocation and a worked Python one, what it returns, and how it fails. Body only, with no title and no deterministic or model-backed line, because the library renders those. Register it on the capability's row in the capability list the skill renders (`core/skill.py` `CAPABILITIES`, or this tool's equivalent) through `skill=`.
 - `<tool> <name> --help` prints that skill and `<tool> <name> -h` the terse generated table, which the tool's `tests/test_skill.py` enumerates over every capability.
@@ -39,7 +39,7 @@ One model-backed capability, complete:
 ## Models
 
 Never write a model name from memory. The names you remember are older than the ones the account can use, and they are wrong even when they look familiar.
-The default is the tool's `DEFAULT_INTELLIGENCE_MODEL`. When you have to pick or confirm a model, list what the signed-in account can use right now and choose from that list.
+For Copilot SDK the default is the tool's `DEFAULT_INTELLIGENCE_MODEL`. Amplifier Agent requires explicit provider and model selection, with no implicit default. When you have to pick or confirm a model, list what the selected provider/account can use right now and choose from that list.
 
 With the copilot-sdk intelligence layer, run this from the tool's root:
 

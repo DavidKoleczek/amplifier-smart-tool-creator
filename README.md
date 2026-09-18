@@ -2,13 +2,13 @@
 
 Smart Tool Creator is the [Smart Tool](https://github.com/microsoft/amplifier-smart-tools) for building smart tools.
 It scaffolds the structure the spec requires, checks a tool against the spec and its conformance kit, and evaluates a tool's model-backed capabilities in isolation.
-The intelligence inside is implemented with the [GitHub Copilot SDK](https://github.com/github/copilot-sdk) behind an interface that other agent SDKs can implement with others to come.
+The intelligence inside uses the [GitHub Copilot SDK](https://github.com/github/copilot-sdk) by default, or [Amplifier Agent](https://github.com/microsoft/amplifier-agent), behind the same interface.
 
 ## Installation
 
 Prerequisites:
 - Requires [uv](https://docs.astral.sh/uv/getting-started/installation/) 0.9.17 or newer.
-- [GitHub CLI](https://cli.github.com/) signed in to an account with a [GitHub Copilot subscription](https://github.com/github/copilot-cli#prerequisites) for the intelligent features.
+- For Copilot: [GitHub CLI](https://cli.github.com/) signed in to an account with a [GitHub Copilot subscription](https://github.com/github/copilot-cli#prerequisites).
 
 ```bash
 uv tool install git+https://github.com/DavidKoleczek/amplifier-smart-tool-creator
@@ -66,6 +66,23 @@ smart-tool-creator add-smart-capability "Given an incident id, fetch its chat tr
 ```
 
 See the [CLI reference](docs/02-cli.md) for every flag and the [library reference](docs/01-library.md) for the Python surface.
+
+### Amplifier Agent
+
+Scaffolding does not use a model or need credentials. Choose the generated tool's SDK with
+`init --intelligence amplifier-agent`. This is separate from Creator's own backend:
+
+```bash
+uv tool install "amplifier-smart-tool-creator[amplifier] @ git+https://github.com/DavidKoleczek/amplifier-smart-tool-creator"
+# In a development checkout: uv sync --extra amplifier
+smart-tool-creator init release-notes --description "Summarizes changelogs" --intelligence amplifier-agent
+smart-tool-creator check-spec-adherence --directory ./release-notes --backend amplifier-agent --provider anthropic --model claude-sonnet-4-6
+```
+
+Set the selected provider's environment credentials (for example `ANTHROPIC_API_KEY`), or
+configure them using `amplifier-agent auth`. Provider and model are explicit; access is not
+inherited from the calling agent. First use may download runtime modules. Agent v0.17.0 is
+pinned from Git. No Copilot subscription is needed unless you choose the Copilot provider.
 
 ## Contributing
 

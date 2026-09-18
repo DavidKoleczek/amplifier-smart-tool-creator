@@ -19,7 +19,33 @@ class Intelligence(Protocol):
 `run` executes one agent: `AgentRequest` holds the prompt, model, optional workspace, and optional output schema; `AgentResult` holds the text, structured output, or error.
 Setting `AgentRequest.resume` to an earlier `AgentResult.session_id` continues that session instead of starting a fresh one, so the agent keeps what it learned.
 
+{% if intelligence == "amplifier-agent" -%}
+`default_intelligence(provider="anthropic")` returns `AmplifierIntelligence`. Pass an explicit
+model on every `AgentRequest` and call `preflight()` before work. Credentials use Agent's
+environment/credential-file resolution, not the calling agent's session.
+`DEFAULT_INTELLIGENCE_MODEL` is empty intentionally: configure a model rather than silently
+using another provider's model name.
+
+```python
+from {{ package }}.intelligence.interface import default_intelligence
+from {{ package }}.intelligence.schemas import AgentRequest
+
+agent = default_intelligence(provider="anthropic")
+agent.preflight()
+result = agent.run(AgentRequest(prompt="Say hello.", model="claude-sonnet-4-6", timeout_seconds=60))
+```
+
+The adapter embeds Agent v0.17.0 in an isolated worker process, serializing calls to protect
+SDK globals. Imports on deterministic paths never import Agent. Transcripts last for this
+adapter's lifetime; resume on the same adapter with the same workspace/write permission.
+Only completed turns are saved. Timeouts include queue waiting with five seconds of cleanup
+grace. Schema outputs require validated submission with at most two repair turns.
+Plain completions expose no tools except structured submission. Read-only workspaces expose
+a confined file/directory reader; writable workspaces add file writing and shell commands.
+Shell commands are not sandboxed. Default hooks, delegation and MCP are not inherited.
+{% else -%}
 `default_intelligence()` returns the shipped implementation, `CopilotIntelligence`, built on the [GitHub Copilot SDK](https://github.com/github/copilot-sdk) and signed in through the GitHub CLI.
+{% endif -%}
 Another implementation is a module satisfying the protocol and a branch in that factory.
 
 ## Manifest
@@ -84,4 +110,4 @@ def repository_url() -> str | None
 
 A capability's code goes in `{{ package }}/capabilities/<name>/`, with its prompts, templates, and its own `SKILL.md` beside it, named on its row in `core/skill.py` `CAPABILITIES`, and `lib.py` gets a facade function that imports it and is the only caller of it.
 Each capability of the library gets a section here: what it does and when to reach for it, the signature `lib.py` exposes, what each argument means, and what it returns or raises.
-Model-backed capabilities say so, and take `model` and `reasoning_effort`, defaulting to `DEFAULT_INTELLIGENCE_MODEL` and `low` from `{{ package }}.schemas`.
+Model-backed capabilities say so, and take `model` and `reasoning_effort`.{% if intelligence == "amplifier-agent" %} Require explicit provider and model selection; do not use a Copilot model default. Keep the same adapter for follow-up and repair turns.{% else %} They default to `DEFAULT_INTELLIGENCE_MODEL` and `low` from `{{ package }}.schemas`.{% endif %}

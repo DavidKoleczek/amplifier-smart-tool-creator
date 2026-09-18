@@ -11,6 +11,7 @@ REFERENCE_ROOT = Path(__file__).parent / "reference"
 REFERENCES = [{% for reference in references %}
     "{{ reference }}",{% endfor %}
 ]
+REFERENCE_REVISIONS = {{ reference_revisions }}
 
 
 def run(command: str) -> None:
@@ -25,7 +26,12 @@ def clone_missing_references() -> None:
         if destination.exists():
             continue
         destination.parent.mkdir(parents=True, exist_ok=True)
-        subprocess.run(["git", "clone", "--depth", "1", "--single-branch", repository, str(destination)], check=True)
+        revision = REFERENCE_REVISIONS.get(repository)
+        revision_args = ["--branch", revision] if revision else []
+        subprocess.run(
+            ["git", "clone", "--depth", "1", "--single-branch", *revision_args, repository, str(destination)],
+            check=True,
+        )
 
 
 def main() -> None:
