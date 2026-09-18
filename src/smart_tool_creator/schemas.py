@@ -62,7 +62,7 @@ class Capability(NamedTuple):
 # region: Init
 
 Language = Literal["uv-python"]
-IntelligenceLayer = Literal["copilot-sdk"]
+IntelligenceLayer = Literal["copilot-sdk", "amplifier-agent"]
 
 
 class Scaffold(BaseModel):

@@ -3,6 +3,7 @@
 from typing import Protocol
 
 from smart_tool_creator.intelligence.schemas import AgentRequest, AgentResult
+from smart_tool_creator.schemas import IntelligenceLayer, SmartToolCreatorError
 
 
 class Intelligence(Protocol):
@@ -23,7 +24,13 @@ class Intelligence(Protocol):
         ...
 
 
-def default_intelligence() -> Intelligence:
+def default_intelligence(backend: IntelligenceLayer = "copilot-sdk", provider: str | None = None) -> Intelligence:
+    if backend == "amplifier-agent":
+        from smart_tool_creator.intelligence.amplifier import AmplifierIntelligence
+
+        return AmplifierIntelligence(provider=provider)
+    if backend != "copilot-sdk" or provider is not None:
+        raise SmartToolCreatorError("Choose copilot-sdk without --provider, or amplifier-agent with --provider.")
     from smart_tool_creator.intelligence.copilot import CopilotIntelligence
 
     return CopilotIntelligence()

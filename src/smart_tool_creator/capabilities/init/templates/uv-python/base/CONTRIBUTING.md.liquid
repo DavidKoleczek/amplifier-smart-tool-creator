@@ -9,8 +9,12 @@ Install:
 - [Git](https://git-scm.com/)
 - [uv](https://docs.astral.sh/uv/getting-started/installation/): Manages Python environments
 - [prek](https://github.com/j178/prek): Used for precommit hooks. Recommended to install through PyPI/uv with `uv tool install prek`. Use `uv tool upgrade prek` to update it.
+{% if intelligence == "amplifier-agent" -%}
+- Amplifier Agent is a pinned dependency. For model-backed capabilities, configure the selected provider with environment credentials or `amplifier-agent auth`, and supply an explicit model. Read `reference/amplifier-agent/docs/INTEGRATION.md` at the v0.17.0 tag before changing the adapter.
+{% else -%}
 - [GitHub CLI](https://cli.github.com/) for intelligence features with GitHub Copilot.
 - [GitHub Copilot subscription](https://github.com/github/copilot-cli#prerequisites) for intelligent features.
+{% endif %}
 
 ### Initial Setup
 

@@ -8,7 +8,11 @@
 
 Prerequisites:
 - [uv](https://docs.astral.sh/uv/getting-started/installation/).
+{% if intelligence == "amplifier-agent" -%}
+- Amplifier Agent v0.17.0 is installed as a dependency. Model-backed capabilities need an explicit provider/model and that provider's environment credentials or `amplifier-agent auth` setup. First use may download runtime modules. Manifest and help need no credentials.
+{% else -%}
 - [GitHub CLI](https://cli.github.com/) signed in to an account with a [GitHub Copilot subscription](https://github.com/github/copilot-cli#prerequisites) for the model-backed capabilities.
+{% endif %}
 
 ```bash
 uv tool install git+{{ repository }}

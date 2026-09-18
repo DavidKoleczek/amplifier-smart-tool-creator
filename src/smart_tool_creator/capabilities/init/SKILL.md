@@ -30,8 +30,9 @@ scaffold.root, scaffold.files, scaffold.references, scaffold.output_message
   It must not exist, or must be empty.
 - `--language`: the language the tool is written in. `uv-python`, the default, is the only
   one.
-- `--intelligence`: the SDK its model-backed capabilities run through. `copilot-sdk`, the
-  default, is the only one.
+- `--intelligence`: the generated tool's SDK, `copilot-sdk` (default) or `amplifier-agent`.
+  This does not select Creator's own backend. Amplifier scaffolds need no credentials to
+  generate; their future model-backed capabilities require an explicit provider and model.
 - `--skill`: also ship an Agent Skill at `skills/<name>/SKILL.md` that teaches an agent to
   drive the tool. Off by default.
 - `--repository URL`: the `https://` URL the tool will be cloned from. It is declared in

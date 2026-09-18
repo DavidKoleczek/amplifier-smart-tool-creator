@@ -130,6 +130,8 @@ def test_the_prompt_carries_the_request_the_context_and_the_root(descriptor_only
         assert entry in request.prompt
     assert str(descriptor_only.resolve()) in request.prompt
     assert DEFAULT_INTELLIGENCE_MODEL in request.prompt
+    assert "follow the target tool's intelligence configuration, not Creator's backend" in request.prompt
+    assert "Amplifier Agent requires explicit provider and model selection, with no implicit default" in request.prompt
     assert request.workspace is not None
     assert request.workspace.path == descriptor_only.resolve()
     assert request.writable is True

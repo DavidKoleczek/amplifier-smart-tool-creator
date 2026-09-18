@@ -12,6 +12,15 @@ Install:
 - [GitHub CLI](https://cli.github.com/) for intelligence features with GitHub Copilot.
 - [GitHub Copilot subscription](https://github.com/github/copilot-cli#prerequisites) for intelligent features.
 
+The Copilot prerequisites apply only to that backend. For Amplifier Agent use
+`uv sync --extra amplifier` and configure the selected provider with environment credentials
+or `amplifier-agent auth`. Tests do not make live model calls.
+
+`CREATOR_TEST_REAL_AGENT=1 uv run --extra amplifier pytest tests/test_amplifier_integration.py`
+also tests the real Agent Engine and loop with a scripted provider, including submission and
+resume. Its first run may download runtime modules; it does not use credentials or prove
+live model quality.
+
 ### Initial Setup
 
 1. Clone the repository:

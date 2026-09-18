@@ -9,7 +9,7 @@ from smart_tool_creator.capabilities.check_spec_adherence import checks as adher
 from smart_tool_creator.capabilities.init import scaffold
 from smart_tool_creator.core import manifest
 from smart_tool_creator.core import skill as skill_module
-from smart_tool_creator.intelligence.interface import Intelligence
+from smart_tool_creator.intelligence.interface import Intelligence, default_intelligence
 from smart_tool_creator.schemas import (
     DEFAULT_INTELLIGENCE_MODEL,
     DEFAULT_PROBE_TIMEOUT_SECONDS,
@@ -29,6 +29,11 @@ from smart_tool_creator.schemas import (
 def load_manifest() -> Manifest:
     """The tool's manifest as structured data, read from the SMART_TOOL.md shipped inside the package."""
     return manifest.load_manifest()
+
+
+def create_intelligence(backend: IntelligenceLayer = "copilot-sdk", provider: str | None = None) -> Intelligence:
+    """Select a backend explicitly, without initializing a model or importing the Agent SDK."""
+    return default_intelligence(backend, provider)
 
 
 def skill(capability: str | None = None) -> str:

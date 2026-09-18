@@ -31,6 +31,14 @@ report.counts, report.deviating, report.findings, report.output_message
 
 ## Arguments
 
+- `--backend`: Creator's runtime, `copilot-sdk` (default) or `amplifier-agent`.
+- `--provider`: required with Amplifier, along with an explicit `--model`. For example:
+  `check-spec-adherence --backend amplifier-agent --provider anthropic --model claude-sonnet-4-6`.
+  Install the `[amplifier]` extra and configure that provider's environment credentials or
+  `amplifier-agent auth`. Copilot defaults below do not apply to Amplifier.
+  Library callers use `lib.create_intelligence("amplifier-agent", provider="anthropic")`.
+  Amplifier serializes the reviewers because the SDK has process-global state.
+
 - `--directory PATH`: the smart tool's distribution root; the current directory when
   omitted. It must hold a `smart-tool.json` at its root, and no parent is searched.
 - `--check ID`: repeatable; a check id from the list below. Every check when omitted. An id
@@ -100,7 +108,7 @@ failures                              error types, preflight code, exit codes, t
 
 ## Failures
 
-Model-backed: it runs through GitHub Copilot, signed in as the GitHub CLI's user, so `gh`
+Model-backed: by default it runs through GitHub Copilot, signed in as the GitHub CLI's user, so `gh`
 must be installed and `gh auth login` completed with an account that has a Copilot
 subscription. With nothing configured it fails immediately and names what to set; it never
 falls back to a deterministic answer.

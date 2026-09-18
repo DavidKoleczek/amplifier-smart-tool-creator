@@ -8,10 +8,11 @@ import subprocess
 import pytest
 
 from smart_tool_creator.lib import init
-from smart_tool_creator.schemas import SmartToolCreatorError
+from smart_tool_creator.schemas import IntelligenceLayer, SmartToolCreatorError
 
 NAME = "release-notes"
 DESCRIPTION = "Summarizes changelogs into release notes"
+AGENT_COMMIT = "530bb7d8527b45a8d422ed42fc9580a97ffabcb1"
 
 SPEC_REQUIRED = [
     "smart-tool.json",
@@ -51,12 +52,18 @@ def passes(command: list[str], cwd: Path) -> None:
     assert completed.returncode == 0, f"{' '.join(command)}\n{completed.stdout}\n{completed.stderr}"
 
 
-def test_init_produces_a_conforming_committed_tool(tmp_path: Path) -> None:
+@pytest.mark.parametrize("intelligence", ["copilot-sdk", "amplifier-agent"])
+def test_init_produces_a_conforming_committed_tool(tmp_path: Path, intelligence: IntelligenceLayer) -> None:
     root = tmp_path / NAME
-    result = init(NAME, DESCRIPTION, directory=root, skill=True)
+    result = init(NAME, DESCRIPTION, directory=root, skill=True, intelligence=intelligence)
 
     assert result.root == root.resolve()
-    for relative in SPEC_REQUIRED + SHIPPED_ALONGSIDE:
+    shipped = (
+        [p.replace("intelligence/copilot.py", "intelligence/amplifier.py") for p in SHIPPED_ALONGSIDE]
+        if intelligence == "amplifier-agent"
+        else SHIPPED_ALONGSIDE
+    )
+    for relative in SPEC_REQUIRED + shipped:
         assert Path(relative) in result.files, relative
         assert (root / relative).is_file(), relative
 
@@ -98,6 +105,50 @@ def test_init_produces_a_conforming_committed_tool(tmp_path: Path) -> None:
 
     passes(["prek", "run", "--all-files"], root)
     passes(["uv", "run", "pytest"], root)
+    passes(["uv", "build"], root)
+    passes(
+        [
+            "uv",
+            "run",
+            "python",
+            "-c",
+            (
+                "import os, sys; os.environ['AMPLIFIER_HOME'] = 'host-value'; "
+                "from release_notes.intelligence.interface import default_intelligence; "
+                "from release_notes import lib; lib.load_manifest(); lib.skill(); "
+                "assert os.environ['AMPLIFIER_HOME'] == 'host-value'; "
+                "assert not any(n.startswith('amplifier_agent_') for n in sys.modules)"
+            ),
+        ],
+        root,
+    )
+    if intelligence == "amplifier-agent":
+        for relative in ("README.md", "CONTRIBUTING.md", "src/release_notes/SMART_TOOL.md", "docs/01-library.md"):
+            content = (root / relative).read_text()
+            assert "gh auth login" not in content
+            assert "Amplifier" in content
+        assert "[amplifier]" not in (root / "src/release_notes/intelligence/amplifier.py").read_text()
+        guidance = (root / "AGENTS.md").read_text()
+        assert "Require explicit provider and model parameters, with no model default." in guidance
+        assert "They default to `DEFAULT_INTELLIGENCE_MODEL`" not in guidance
+        reference = root / "reference/amplifier-agent"
+        assert run(["git", "rev-parse", "HEAD"], reference).stdout.strip() == AGENT_COMMIT
+        # Simulate a fresh checkout's missing ignored reference without deleting the original.
+        reference.rename(tmp_path / "original-agent-reference")
+        passes(
+            [
+                "uv",
+                "run",
+                "python",
+                "-c",
+                "import runpy; runpy.run_path('setup-for-dev.py')['clone_missing_references']()",
+            ],
+            root,
+        )
+        assert run(["git", "rev-parse", "HEAD"], reference).stdout.strip() == AGENT_COMMIT
+        assert run(["git", "status", "--porcelain"], root).stdout.strip() == ""
+    else:
+        assert "They default to `DEFAULT_INTELLIGENCE_MODEL`" in (root / "AGENTS.md").read_text()
 
     kit = Path("reference") / "amplifier-smart-tools" / "conformance" / "run.py"
     conformance = run(["uv", "run", "--", "uv", "run", "--no-project", str(kit), ".", "--json-only"], root)

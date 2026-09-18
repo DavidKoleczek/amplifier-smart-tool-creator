@@ -22,6 +22,11 @@ smart-tool-creator = "smart_tool_creator.cli:main"
 [project.urls]
 Repository = "https://github.com/DavidKoleczek/amplifier-smart-tool-creator"
 
+[project.optional-dependencies]
+amplifier = [
+    "amplifier-agent @ git+https://github.com/microsoft/amplifier-agent@v0.17.0",
+]
+
 [build-system]
 requires = ["uv_build>=0.12.5,<0.13.0"]
 build-backend = "uv_build"

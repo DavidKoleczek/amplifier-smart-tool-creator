@@ -27,7 +27,7 @@ smart-tool-creator manifest
 ## smart-tool-creator init
 
 ```bash
-smart-tool-creator init NAME --description TEXT [--directory PATH] [--language uv-python] [--intelligence copilot-sdk] [--skill] [--repository URL]
+smart-tool-creator init NAME --description TEXT [--directory PATH] [--language uv-python] [--intelligence copilot-sdk|amplifier-agent] [--skill] [--repository URL]
 ```
 
 `lib.init(name, description, ...)` with `NAME` positional and every other argument an option of the same name. 
@@ -45,9 +45,21 @@ Exits 1 when the verdict is `FAIL`.
 
 ## smart-tool-creator check-spec-adherence
 
+Both model-backed commands accept `--backend copilot-sdk|amplifier-agent` (Copilot by
+default). Amplifier requires `--provider NAME --model MODEL` and the `[amplifier]` extra.
+These choose Creator's runtime, not the SDK used by `init`. Credentials follow the
+selected backend. For example:
+
 ```bash
-smart-tool-creator check-spec-adherence [--directory PATH] [--check ID]... [--model gpt-5.6-terra] [--reasoning-effort high]
+smart-tool-creator check-spec-adherence --backend amplifier-agent --provider anthropic --model claude-sonnet-4-6
 ```
+
+```bash
+smart-tool-creator check-spec-adherence [--directory PATH] [--check ID]... [--backend copilot-sdk|amplifier-agent] [--provider NAME] [--model MODEL] [--reasoning-effort high]
+```
+
+The model defaults to `gpt-5.6-terra` for Copilot only. Amplifier requires both
+`--provider` and `--model`; neither is inferred.
 
 `lib.check_spec_adherence(directory, checks, ...)` with `--check` repeated once per id. 
 Prints the result's `output_message`: one line per finding, each deviation with its spec sentence, evidence, and suggestion, and the counts. 
@@ -57,8 +69,11 @@ Exits 1 in either case: the kit failed, or any finding deviates.
 ## smart-tool-creator add-smart-capability
 
 ```bash
-smart-tool-creator add-smart-capability REQUEST [--directory PATH] [--context TEXT]... [--model gpt-6-astra] [--reasoning-effort low]
+smart-tool-creator add-smart-capability REQUEST [--directory PATH] [--context TEXT]... [--backend copilot-sdk|amplifier-agent] [--provider NAME] [--model MODEL] [--reasoning-effort low]
 ```
+
+The model defaults to `gpt-6-astra` for Copilot only. Amplifier requires both
+`--provider` and `--model`; neither is inferred.
 
 `lib.add_smart_capability(request, ...)` with `REQUEST` positional and `--context` repeated once per entry. 
 Prints the result's `output_message`: the agent's report, one line per check with its status (a skipped check names why on the same line), the next steps, and any check still failing after the fix rounds. 

@@ -172,17 +172,24 @@ def check_spec_adherence(
         list[str] | None,
         typer.Option("--check", help="Repeatable; a check id to review, from the checklist; every check when omitted."),
     ] = None,
-    model: Annotated[str, typer.Option("--model", help="The model the reviewers run on.")] = DEFAULT_REVIEW_MODEL,
+    model: Annotated[
+        str | None, typer.Option("--model", help="The model the reviewers run on; required for Amplifier.")
+    ] = None,
+    backend: Annotated[
+        IntelligenceLayer, typer.Option("--backend", help="Creator's own intelligence backend.")
+    ] = "copilot-sdk",
+    provider: Annotated[str | None, typer.Option("--provider", help="Explicit Amplifier provider name.")] = None,
     reasoning_effort: Annotated[
         ReasoningEffort, typer.Option("--reasoning-effort", help="How hard the model thinks before it answers.")
     ] = "high",
 ) -> None:
-    """Review a smart tool against the parts of the spec the conformance kit cannot decide, and suggest fixes. Model-backed: runs through GitHub Copilot, signed in as the GitHub CLI's user."""
+    """Review a smart tool against the parts of the spec the conformance kit cannot decide. Model-backed: Copilot SDK by default, or Amplifier Agent."""
     report = lib.check_spec_adherence(
         directory=directory,
         checks=check,
-        model=model,
+        model=_model(backend, model, DEFAULT_REVIEW_MODEL),
         reasoning_effort=reasoning_effort,
+        intelligence=lib.create_intelligence(backend, provider),
     )
     typer.echo(report.output_message)
     if report.conformance.verdict == "FAIL" or report.deviating:
@@ -201,22 +208,35 @@ def add_smart_capability(
         list[str] | None,
         typer.Option("--context", help="Repeatable; text, or paths the agent should read before it designs anything."),
     ] = None,
-    model: Annotated[str, typer.Option("--model", help="The model the agent runs on.")] = DEFAULT_INTELLIGENCE_MODEL,
+    model: Annotated[
+        str | None, typer.Option("--model", help="The model the agent runs on; required for Amplifier.")
+    ] = None,
+    backend: Annotated[
+        IntelligenceLayer, typer.Option("--backend", help="Creator's own intelligence backend.")
+    ] = "copilot-sdk",
+    provider: Annotated[str | None, typer.Option("--provider", help="Explicit Amplifier provider name.")] = None,
     reasoning_effort: Annotated[
         ReasoningEffort, typer.Option("--reasoning-effort", help="How hard the model thinks before it acts.")
     ] = "low",
 ) -> None:
-    """Add one model-backed capability to an existing smart tool: library, CLI, tests, and docs, verified against the tool's own checks. Model-backed: runs through GitHub Copilot, signed in as the GitHub CLI's user."""
+    """Add one model-backed capability, verified against the tool's own checks. Model-backed: Copilot SDK by default, or Amplifier Agent."""
     added = lib.add_smart_capability(
         request,
         directory=directory,
         context=context,
-        model=model,
+        model=_model(backend, model, DEFAULT_INTELLIGENCE_MODEL),
         reasoning_effort=reasoning_effort,
+        intelligence=lib.create_intelligence(backend, provider),
     )
     typer.echo(added.output_message)
     if any(check.status == "failed" for check in added.checks):
         raise typer.Exit(1)
+
+
+def _model(backend: IntelligenceLayer, model: str | None, default: str) -> str:
+    if backend == "amplifier-agent" and not model:
+        raise SmartToolCreatorError("Amplifier Agent needs an explicit --model and --provider.")
+    return model or default
 
 
 def main() -> int:
