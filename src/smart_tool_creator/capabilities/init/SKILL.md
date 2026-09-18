@@ -1,4 +1,4 @@
-`init` creates a git repository (no remote) holding a tool that already passes the
+`init` creates a git repository (no remote unless supplied) holding a tool that already passes the
 conformance kit: manifest, descriptor, library, thin CLI, docs, tests, an `AGENTS.md`
 carrying the spec's principles, and a gitignored `reference/` with shallow clones of the
 spec and the SDK to read while developing. The environment is synced and the first commit is
@@ -34,6 +34,11 @@ scaffold.root, scaffold.files, scaffold.references, scaffold.output_message
   default, is the only one.
 - `--skill`: also ship an Agent Skill at `skills/<name>/SKILL.md` that teaches an agent to
   drive the tool. Off by default.
+- `--adapter none|mcp|mcp-app`: optional portable surface, `none` by default. `mcp` adds
+  a stdio server over the public manifest method, the optional `mcp` dependency extra,
+  and a real transport test. `mcp-app` also bundles a read-only view using the official
+  MCP Apps SDK; it needs Node.js/npm at scaffold time. Neither starts a service or calls
+  a model. Both ship `docs/03-portable-adapter.md` for extending shared domain actions.
 - `--repository URL`: the `https://` URL the tool will be cloned from. It is declared in
   `pyproject.toml`, every install instruction is built on it, and it becomes the `origin`
   remote; nothing is pushed. Without it, `https://github.com/<owner>/<name>` stands in, there
@@ -63,3 +68,10 @@ is empty, `--repository` is not an `https://` URL, the target directory is a fil
 empty, `git` or `uv` is not on `PATH`, git has no `user.name` or `user.email` for the first
 commit, or a reference cannot be cloned. A bad invocation exits 2. Everything knowable is
 checked before a file is written, so a failure caught there leaves no half-built tool.
+
+For the optional App, npm dependencies and the HTML bundle are built before the first
+commit. Missing npm fails before writing; install/build failures name the partial tool
+to remove before retrying. Consumers of the built Python package need no Node.js or CDN.
+The starter does not implement domain persistence, drafts, grants, or paid-work recovery;
+its packaged guidance describes these as optional development recommendations, not new
+base conformance requirements. See `capabilities/init/portable-surfaces.md` for selection.

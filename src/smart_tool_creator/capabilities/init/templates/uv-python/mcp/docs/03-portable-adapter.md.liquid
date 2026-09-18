@@ -1,0 +1,80 @@
+# Optional portable adapter
+
+The {{ name }} library and CLI work without MCP. The optional stdio adapter exposes
+`read_manifest` through the same public library. It does not start when imported and
+does not configure a provider or perform model work.
+
+```bash
+uv sync --extra mcp
+uv run --extra mcp {{ name }}-mcp
+```
+
+Configure any MCP client with that executable and arguments. Use an absolute executable
+or `uv --directory /path/to/checkout run --extra mcp {{ name }}-mcp` when its working folder
+is different. Stdout belongs to MCP; send diagnostics to stderr.
+{% if adapter == "mcp-app" %}
+The optional MCP App is a read-only manifest viewer. Its Refresh button invokes the
+same `read_manifest` tool an agent can call. The view uses the official MCP Apps SDK
+and ships as one HTML resource, so consumers do not need Node.js or a CDN.
+
+After editing `ui/src/app.js`, rebuild before packaging:
+
+```bash
+npm ci --prefix ui --ignore-scripts
+npm run build --prefix ui
+uv run --extra mcp pytest
+```
+
+Node.js and npm are build-time requirements only. The generated `mcp_app.html` is bundled
+inside the Python package with the bundled dependencies' `mcp_app.LICENSE.txt`. The build
+collects these notices from dependency packages and fails if a package supplies none.
+The view needs no network or device permissions. A host without
+MCP Apps can still call the deterministic tool. Opening the view only reads the manifest.
+{% endif %}
+## Add domain capabilities in the library first
+
+- Add a typed public method, then adapt it for MCP and the optional view. Validate the
+  same arguments, authority, and target identities on every path. Keep domain logic out
+  of event handlers. UI actions should be available to agents unless policy explicitly
+  restricts them; do not use app-only helpers to bypass that restriction.
+- For retained work, distinguish work, revision, operation, and view IDs. Use request IDs
+  and state preconditions where the library supports them. A receipt is acceptance, not
+  completion. Reconcile uncertain work before retrying anything that may spend again.
+- Save drafts through explicit library methods with a conflict policy. View context is
+  untrusted observation, not durable storage, a user instruction, or approval. Report
+  the revision and selection actually shown; do not silently move review to a new revision.
+- Separate actor identity, requested effect, and execution grants. A model-call limit is
+  not a hard dollar limit. Unsupported limits and unknown usage stay explicit. Never
+  expose credentials to the view, and never display missing cost as zero.
+- Attaching a view, starting an owned runner, canceling work, and deleting retained data
+  are separate effects. Closing a view does not cancel domain work. Reconnect by reading
+  retained state, not replaying generation. Forking a conversation does not clone domain
+  work; disclose shared attachment or offer a supported clone.
+- Keep generated/imported HTML in a separate sandbox without the control view's broker.
+  Validate message sources, schemas, and stale grants. Keep resources scoped to their
+  work and support remote browsers without credential-bearing localhost URLs.
+
+Use standard MCP tools/resources and MCP Apps metadata, not a host-specific protocol.
+The tool owns its domain state. A host owns conversation association and granted host
+capabilities. Sampling, Tasks, elicitation, external assets, and device access are optional
+negotiated capabilities; this starter does not implement them.
+
+These are development recommendations for optional collaborative capabilities, not new
+Smart Tool v1 requirements. Do not add undeclared manifest/descriptor fields or parse
+manifest prose as executable setup. The library/CLI and base conformance remain authoritative.
+
+## Validation before claiming support
+
+Run the generated stdio test without provider keys. Add domain fixtures that compare
+user and agent results, exercise stale revisions and duplicate request IDs, preserve
+drafts across reconnect, and distinguish closing a view from canceling an owned runner.
+Test generated-content isolation and denied host capabilities. Check unknown usage and
+that each model call is counted once. Finally try the same tool in an independent host,
+and an unfamiliar deterministic tool in the host you develop with.
+
+The starter proves manifest transport only. It does not supply domain persistence,
+concurrency control, grant enforcement, multi-user editing, or paid-work recovery.
+
+References: [MCP](https://modelcontextprotocol.io/specification/latest),
+[MCP Apps](https://github.com/modelcontextprotocol/ext-apps), and
+[Python SDK](https://py.sdk.modelcontextprotocol.io/).

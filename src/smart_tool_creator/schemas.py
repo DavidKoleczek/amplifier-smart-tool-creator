@@ -63,6 +63,7 @@ class Capability(NamedTuple):
 
 Language = Literal["uv-python"]
 IntelligenceLayer = Literal["copilot-sdk"]
+OptionalAdapter = Literal["none", "mcp", "mcp-app"]
 
 
 class Scaffold(BaseModel):

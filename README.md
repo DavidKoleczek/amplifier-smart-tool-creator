@@ -55,6 +55,9 @@ smart-tool-creator manifest
 # Scaffold a new smart tool into ./incident-postmortem, optionally with an Agent Skill and the repository it will be pushed to. Specify a specific directory with --directory
 smart-tool-creator init incident-postmortem --description "Writes, reviews, and tracks blameless postmortems from your incident platform's records" --skill --repository https://github.com/org/incident-postmortem
 
+# Optionally include a portable MCP server and a bundled read-only MCP App (requires Node.js/npm to build)
+smart-tool-creator init release-notes --description "Drafts release notes from changelogs" --adapter mcp-app
+
 # Run the conformance kit against a smart tool
 smart-tool-creator check-conformance --directory ./incident-postmortem
 

@@ -18,6 +18,7 @@ from smart_tool_creator.schemas import (
     DEFAULT_REVIEW_MODEL,
     IntelligenceLayer,
     Language,
+    OptionalAdapter,
     ReasoningEffort,
     SmartToolCreatorError,
 )
@@ -131,6 +132,10 @@ def init(
             "instruction, and added as the origin remote; nothing is pushed.",
         ),
     ] = None,
+    adapter: Annotated[
+        OptionalAdapter,
+        typer.Option("--adapter", help="Optional MCP server, with an interactive MCP App when mcp-app is selected."),
+    ] = "none",
 ) -> None:
     """Scaffold a new smart tool: a git repository holding a spec-conforming tool that passes the conformance kit. Deterministic."""
     scaffold = lib.init(
@@ -141,6 +146,7 @@ def init(
         intelligence=intelligence,
         skill=skill,
         repository=repository,
+        adapter=adapter,
     )
     typer.echo(scaffold.output_message)
 

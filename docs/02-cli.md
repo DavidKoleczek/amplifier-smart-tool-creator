@@ -27,7 +27,7 @@ smart-tool-creator manifest
 ## smart-tool-creator init
 
 ```bash
-smart-tool-creator init NAME --description TEXT [--directory PATH] [--language uv-python] [--intelligence copilot-sdk] [--skill] [--repository URL]
+smart-tool-creator init NAME --description TEXT [--directory PATH] [--language uv-python] [--intelligence copilot-sdk] [--skill] [--repository URL] [--adapter none|mcp|mcp-app]
 ```
 
 `lib.init(name, description, ...)` with `NAME` positional and every other argument an option of the same name. 

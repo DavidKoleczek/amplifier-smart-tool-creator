@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tool manifest</title>
+  <style>
+    :root { color-scheme: light dark; font: 14px/1.5 system-ui, sans-serif; }
+    body { margin: 0; padding: 20px; color: var(--color-text-primary, CanvasText); background: var(--color-background-primary, Canvas); }
+    header { display: flex; gap: 12px; align-items: center; justify-content: space-between; }
+    h1 { font-size: 18px; margin: 0; }
+    button { font: inherit; padding: 6px 12px; cursor: pointer; }
+    pre { overflow-wrap: anywhere; white-space: pre-wrap; font: 12px/1.5 ui-monospace, monospace; }
+  </style>
+</head>
+<body>
+  <header><h1>Installed tool</h1><button id="refresh" type="button" disabled>Refresh</button></header>
+  <p id="status" role="status">Connecting to the host...</p>
+  <pre id="details" aria-label="Installed manifest"></pre>
+  <!-- APP_SCRIPT -->
+</body>
+</html>
