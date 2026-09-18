@@ -27,11 +27,14 @@ smart-tool-creator manifest
 ## smart-tool-creator init
 
 ```bash
-smart-tool-creator init NAME --description TEXT [--directory PATH] [--language uv-python] [--intelligence copilot-sdk] [--skill] [--repository URL] [--adapter none|mcp|mcp-app]
+smart-tool-creator init NAME --description TEXT [--directory PATH] [--language uv-python] [--intelligence copilot-sdk] [--skill] [--repository URL]
 ```
 
 `lib.init(name, description, ...)` with `NAME` positional and every other argument an option of the same name. 
 Prints the result's `output_message`: where the tool landed, what was written and committed, the repositories cloned into `reference/`, and the next steps.
+
+Add `--adapter none|mcp|mcp-app` to select an optional portable surface independently
+of the intelligence backend. `none` is the default.
 
 ## smart-tool-creator check-conformance
 

@@ -54,18 +54,13 @@ def init(
     adapter: OptionalAdapter = "none",
 ) -> Scaffold:
     """Scaffold a new smart tool and leave it committed, synced, and runnable."""
+    _adapter_preflight(adapter)
     root = (Path.cwd() / name if directory is None else directory).resolve()
     # One line with no closing period, so it drops into the manifest as is and into prose as a sentence.
     description = " ".join(description.split()).rstrip(".")
     if repository is not None:
         repository = repository.strip().rstrip("/").removesuffix(".git")
     _preflight(name, description, root, repository)
-    if adapter not in {"none", "mcp", "mcp-app"}:
-        raise SmartToolCreatorError("Unknown adapter. Choose none, mcp, or mcp-app.")
-    if adapter == "mcp-app" and shutil.which("npm") is None:
-        raise SmartToolCreatorError(
-            "The mcp-app adapter needs npm to bundle its view. Install Node.js from https://nodejs.org/ and retry, or choose --adapter mcp."
-        )
     placeholder = repository is None
     if repository is None:
         repository = PLACEHOLDER_REPOSITORY.format(name=name)
@@ -150,6 +145,15 @@ def reference_repositories(
     if adapter == "mcp-app":
         references.append(MCP_APPS_REPOSITORY)
     return references
+
+
+def _adapter_preflight(adapter: OptionalAdapter) -> None:
+    if adapter not in {"none", "mcp", "mcp-app"}:
+        raise SmartToolCreatorError("Unknown adapter. Choose none, mcp, or mcp-app.")
+    if adapter == "mcp-app" and shutil.which("npm") is None:
+        raise SmartToolCreatorError(
+            "The mcp-app adapter needs npm to bundle its view. Install Node.js from https://nodejs.org/ and retry, or choose --adapter mcp."
+        )
 
 
 def _preflight(name: str, description: str, root: Path, repository: str | None) -> None:

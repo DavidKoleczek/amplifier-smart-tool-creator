@@ -16,6 +16,11 @@ scaffolding, or ordinary CLI use. Node.js/npm are required only to build or edit
 its compiled HTML ships in the package. MCP transports and resource/view metadata follow
 the official SDKs. No host product is a dependency.
 
+`--adapter` is independent of `--intelligence`: choose any supported intelligence backend
+without changing the MCP contract. The generated manifest tool and view stay deterministic;
+they do not initialize that backend or require its provider credentials. Tests scaffold both
+adapter variants for every registered intelligence choice.
+
 The generated `docs/03-portable-adapter.md` explains how to add real domain actions:
 library-owned validation, typed shared calls, retained IDs and state preconditions,
 idempotent receipts, durable drafts, bounded grants, owned-runner lifecycle, resource and
