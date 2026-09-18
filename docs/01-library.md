@@ -94,6 +94,7 @@ def init(
     intelligence: IntelligenceLayer = "copilot-sdk",
     skill: bool = False,
     repository: str | None = None,
+    adapter: OptionalAdapter = "none",
 ) -> Scaffold
 ```
 
@@ -102,6 +103,7 @@ def init(
 - `directory`: where the tool is created; `name` under the current directory when omitted. Must not exist, or be empty.
 - `language` and `intelligence`: the choices made at scaffold time, listed below. Either can be changed later; each is a set of files, not a commitment.
 - `skill`: also ship an [Agent Skill](https://agentskills.io/specification) at `skills/<name>/SKILL.md` that teaches a coding agent to drive the tool.
+- `adapter`: `none` (default), `mcp`, or `mcp-app`. Adds an optional stdio adapter over the public manifest method and a transport test. `mcp-app` also builds a self-contained official-SDK view and needs Node.js/npm during scaffolding. The generated MCP dependency is an optional extra; no server starts automatically. Both options ship guidance for adding shared domain actions in `docs/03-portable-adapter.md`.
 - `repository`: the `https://` URL the tool will be cloned from. It is declared in `pyproject.toml` under `[project.urls]` so `--help` carries it, and every install instruction in the `README.md`, manifest, and skill is built on it: `git+<url>` for the CLI and library, `npx skills add` for the skill, plus update and uninstall commands. When given, it also becomes the `origin` remote; nothing is pushed. When omitted, `https://github.com/<owner>/<name>` stands in everywhere, there is no remote, and the `output_message` says the instructions do not work until the placeholder is replaced and the tool is pushed.
 
 Every scaffold carries the same shape as this repository: the manifest and descriptor, a library with a thin CLI over it, a `README.md`, `CONTRIBUTING.md`, and `docs/` written for the new tool, and an `AGENTS.md` holding the principles the spec asks of a smart tool. 

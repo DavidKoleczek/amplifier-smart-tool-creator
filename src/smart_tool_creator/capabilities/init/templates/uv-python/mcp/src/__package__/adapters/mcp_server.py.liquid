@@ -1,0 +1,58 @@
+"""Optional stdio adapter over the public library; importing it starts no service."""
+
+from __future__ import annotations
+
+import sys
+from typing import TYPE_CHECKING
+{% if adapter == "mcp-app" %}from pathlib import Path
+{% endif %}
+from {{ package }} import lib
+from {{ package }}.schemas import Manifest
+
+if TYPE_CHECKING:
+    from mcp.server import MCPServer
+
+{% if adapter == "mcp-app" %}APP_URI = "ui://{{ name }}/manifest"
+{% endif %}
+
+def create_server() -> MCPServer:
+    """Build the adapter without starting a process, listener, or model call."""
+    try:
+        from mcp.server import MCPServer
+{% if adapter == "mcp-app" %}        from mcp.server.apps import Apps
+{% endif %}    except ImportError as exc:
+        raise RuntimeError("Install the optional MCP dependencies with `uv sync --extra mcp`, then retry.") from exc
+
+{% if adapter == "mcp-app" %}    apps = Apps()
+
+    @apps.tool(resource_uri=APP_URI)
+    def read_manifest() -> Manifest:
+        """Read the installed tool's manifest. Deterministic; no credentials required."""
+        return lib.load_manifest()
+
+    document = Path(__file__).with_name("mcp_app.html")
+    if not document.is_file():
+        raise RuntimeError("The MCP App has not been built. Run `npm ci --prefix ui` and `npm run build --prefix ui` from the repository, then retry.")
+    apps.add_html_resource(APP_URI, document.read_text(encoding="utf-8"))
+    return MCPServer("{{ title }}", extensions=[apps])
+{% else %}    server = MCPServer("{{ title }}")
+
+    @server.tool()
+    def read_manifest() -> Manifest:
+        """Read the installed tool's manifest. Deterministic; no credentials required."""
+        return lib.load_manifest()
+
+    return server
+{% endif %}
+
+def main() -> None:
+    """Start stdio only when explicitly launched by an MCP client."""
+    try:
+        create_server().run()
+    except RuntimeError as exc:
+        print(str(exc), file=sys.stderr)
+        raise SystemExit(1) from None
+
+
+if __name__ == "__main__":
+    main()

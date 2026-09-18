@@ -8,6 +8,7 @@ DEFAULT_INTELLIGENCE_MODEL = "gpt-6-astra"
 DEFAULT_REVIEW_MODEL = "gpt-5.6-terra"
 DEFAULT_PROBE_TIMEOUT_SECONDS = 20.0
 ReasoningEffort = Literal["low", "medium", "high", "xhigh", "max"]
+OptionalAdapter = Literal["none", "mcp", "mcp-app"]
 
 SEMVER_PATTERN = r"^\d+\.\d+\.\d+$"
 SLUG_PATTERN = r"^[a-z0-9]+(-[a-z0-9]+)*$"

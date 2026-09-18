@@ -9,7 +9,14 @@ import subprocess
 
 from liquid import Environment, StrictUndefined
 
-from smart_tool_creator.schemas import SLUG_PATTERN, IntelligenceLayer, Language, Scaffold, SmartToolCreatorError
+from smart_tool_creator.schemas import (
+    SLUG_PATTERN,
+    IntelligenceLayer,
+    Language,
+    OptionalAdapter,
+    Scaffold,
+    SmartToolCreatorError,
+)
 
 TEMPLATES_ROOT = Path(__file__).parent / "templates"
 OUTPUT_MESSAGE_PATH = Path(__file__).parent / "output_message.md.liquid"
@@ -28,6 +35,8 @@ INTELLIGENCE_DEPENDENCIES: dict[str, list[str]] = {
 SPEC_REPOSITORY = "https://github.com/microsoft/amplifier-smart-tools"
 INTELLIGENCE_REPOSITORIES: dict[str, str] = {"copilot-sdk": "https://github.com/github/copilot-sdk"}
 SKILL_REPOSITORY = "https://github.com/agentskills/agentskills"
+MCP_REPOSITORY = "https://github.com/modelcontextprotocol/python-sdk"
+MCP_APPS_REPOSITORY = "https://github.com/modelcontextprotocol/ext-apps"
 # Stands in for the tool's remote until there is one, so every install instruction is already in its final shape.
 PLACEHOLDER_REPOSITORY = "https://github.com/<owner>/{name}"
 
@@ -42,8 +51,10 @@ def init(
     intelligence: IntelligenceLayer = "copilot-sdk",
     skill: bool = False,
     repository: str | None = None,
+    adapter: OptionalAdapter = "none",
 ) -> Scaffold:
     """Scaffold a new smart tool and leave it committed, synced, and runnable."""
+    _adapter_preflight(adapter)
     root = (Path.cwd() / name if directory is None else directory).resolve()
     # One line with no closing period, so it drops into the manifest as is and into prose as a sentence.
     description = " ".join(description.split()).rstrip(".")
@@ -54,11 +65,16 @@ def init(
     if repository is None:
         repository = PLACEHOLDER_REPOSITORY.format(name=name)
 
-    references = reference_repositories(intelligence, skill)
+    references = reference_repositories(intelligence, skill, adapter)
     sources = [TEMPLATES_ROOT / language / "base", TEMPLATES_ROOT / language / "intelligence" / intelligence]
     if skill:
         sources.append(TEMPLATES_ROOT / language / "skill")
+    if adapter != "none":
+        sources.append(TEMPLATES_ROOT / language / "mcp")
+    if adapter == "mcp-app":
+        sources.append(TEMPLATES_ROOT / language / "mcp-app")
     variables = _variables(name, description, intelligence, references, skill, repository, placeholder)
+    variables["adapter"] = adapter
 
     files = sorted(file for source in sources for file in _render(source, root, variables))
     _git(["init", "--initial-branch=main"], root, "Could not create the git repository; check that git can write here")
@@ -68,7 +84,31 @@ def init(
             root,
             f"Could not add {repository} as the remote; check the URL",
         )
-    _run(["uv", "sync"], root, "Could not sync the new tool's environment; check that uv can reach the package index")
+    sync = ["uv", "sync"] + (["--extra", "mcp"] if adapter != "none" else [])
+    _run(sync, root, "Could not sync the new tool's environment; check that uv can reach the package index")
+    if adapter != "none":
+        adapter_files = [str(Path("src") / name.replace("-", "_") / "adapters"), "tests/test_mcp_adapter.py"]
+        for check in (["check", "--fix"], ["format"]):
+            _run(
+                ["uv", "run", "--extra", "mcp", "ruff", *check, *adapter_files],
+                root,
+                "Could not format the generated adapter; inspect its Python sources",
+            )
+    if adapter == "mcp-app":
+        _run(
+            ["npm", "install", "--ignore-scripts", "--no-audit", "--no-fund"],
+            root / "ui",
+            "Could not install the view's build tools; check npm access",
+        )
+        _run(["npm", "run", "build"], root / "ui", "Could not bundle the MCP App; check the view sources")
+        files.extend(
+            [
+                Path("ui/package-lock.json"),
+                Path("src") / name.replace("-", "_") / "adapters/mcp_app.html",
+                Path("src") / name.replace("-", "_") / "adapters/mcp_app.LICENSE.txt",
+            ]
+        )
+        files.sort()
     for reference in references:
         destination = Path("reference") / reference.rsplit("/", 1)[-1]
         _git(
@@ -93,12 +133,27 @@ def init(
     return Scaffold(root=root, files=files, references=references, output_message=output_message)
 
 
-def reference_repositories(intelligence: IntelligenceLayer, skill: bool) -> list[str]:
+def reference_repositories(
+    intelligence: IntelligenceLayer, skill: bool, adapter: OptionalAdapter = "none"
+) -> list[str]:
     """The repositories an agent developing the new tool should read rather than recall."""
     references = [SPEC_REPOSITORY, INTELLIGENCE_REPOSITORIES[intelligence]]
     if skill:
         references.append(SKILL_REPOSITORY)
+    if adapter != "none":
+        references.append(MCP_REPOSITORY)
+    if adapter == "mcp-app":
+        references.append(MCP_APPS_REPOSITORY)
     return references
+
+
+def _adapter_preflight(adapter: OptionalAdapter) -> None:
+    if adapter not in {"none", "mcp", "mcp-app"}:
+        raise SmartToolCreatorError("Unknown adapter. Choose none, mcp, or mcp-app.")
+    if adapter == "mcp-app" and shutil.which("npm") is None:
+        raise SmartToolCreatorError(
+            "The mcp-app adapter needs npm to bundle its view. Install Node.js from https://nodejs.org/ and retry, or choose --adapter mcp."
+        )
 
 
 def _preflight(name: str, description: str, root: Path, repository: str | None) -> None:

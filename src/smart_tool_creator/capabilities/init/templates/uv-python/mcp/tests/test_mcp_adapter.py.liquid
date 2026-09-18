@@ -1,0 +1,32 @@
+"""The optional adapter calls the same provider-free library through real stdio."""
+
+import sys
+
+import pytest
+
+from {{ package }} import lib
+
+
+async def test_manifest_through_stdio() -> None:
+    pytest.importorskip("mcp", reason="Install the optional adapter with uv sync --extra mcp")
+    from mcp import Client
+    from mcp.client.stdio import StdioServerParameters, stdio_client
+{% if adapter == "mcp-app" %}    from mcp.types import TextResourceContents
+{% endif %}
+    params = StdioServerParameters(command=sys.executable, args=["-m", "{{ package }}.adapters.mcp_server"])
+    async with Client(stdio_client(params)) as session:
+        tools = await session.list_tools()
+        tool = next(item for item in tools.tools if item.name == "read_manifest")
+        assert tool.input_schema["type"] == "object"
+        result = await session.call_tool("read_manifest", {})
+        assert not result.is_error
+        assert result.structured_content == lib.load_manifest().model_dump(mode="json")
+{% if adapter == "mcp-app" %}        assert tool.meta is not None
+        assert tool.meta["ui"]["resourceUri"] == "ui://{{ name }}/manifest"
+        resource = await session.read_resource("ui://{{ name }}/manifest")
+        content = resource.contents[0]
+        assert isinstance(content, TextResourceContents)
+        assert content.mime_type == "text/html;profile=mcp-app"
+        assert "<script>" in content.text
+        assert '<script src=' not in content.text
+{% endif %}
