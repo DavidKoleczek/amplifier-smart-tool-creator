@@ -63,8 +63,7 @@ def select(ids: list[str] | None) -> list[ReviewGroup]:
     unknown = [identifier for identifier in ids if identifier not in known]
     if unknown:
         raise SmartToolCreatorError(
-            f"Not a check of the spec adherence checklist: {', '.join(unknown)}. "
-            f"The checks are: {', '.join(known)}."
+            f"Not a check of the spec adherence checklist: {', '.join(unknown)}. The checks are: {', '.join(known)}."
         )
     wanted = set(ids)
     groups = []
@@ -107,9 +106,7 @@ def _group(directory: Path) -> tuple[int, ReviewGroup]:
             f"{', '.join(stray)}. Add each to the group's checks, or delete the file."
         )
     checks = [_check(present[identifier]) for identifier in header.checks]
-    return header.order, ReviewGroup(
-        name=header.name, read_first=header.read_first, guidance=guidance, checks=checks
-    )
+    return header.order, ReviewGroup(name=header.name, read_first=header.read_first, guidance=guidance, checks=checks)
 
 
 def _check(path: Path) -> SpecCheck:
