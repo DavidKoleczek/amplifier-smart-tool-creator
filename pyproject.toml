@@ -43,6 +43,8 @@ dev = [
 ]
 
 [tool.ruff]
+# Keep the shared, vendored website theme unchanged.
+extend-exclude = ["site/theme", "_site"]
 line-length = 120
 target-version = "py313"
 
@@ -83,3 +85,6 @@ ban-relative-imports = "all"
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
+
+[tool.ty.src]
+exclude = ["site/theme", "_site"]

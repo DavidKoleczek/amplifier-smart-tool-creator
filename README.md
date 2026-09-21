@@ -1,5 +1,7 @@
 # Smart Tool Creator
 
+[Explore the website](https://davidkoleczek.github.io/amplifier-smart-tool-creator/)
+
 Smart Tool Creator is the [Smart Tool](https://github.com/microsoft/amplifier-smart-tools) for building smart tools.
 It scaffolds the structure the spec requires, checks a tool against the spec and its conformance kit, and evaluates a tool's model-backed capabilities in isolation.
 The intelligence inside is implemented with the [GitHub Copilot SDK](https://github.com/github/copilot-sdk) behind an interface that other agent SDKs can implement with others to come.
