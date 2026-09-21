@@ -16,6 +16,7 @@ CAPABILITIES = (
         "Scaffold a new smart tool: a git repository holding a spec-conforming tool that passes the conformance kit.",
         model_backed=False,
         skill="capabilities/init/SKILL.md",
+        resources=("capabilities/init/portable-surfaces.md",),
     ),
     Capability(
         "check-conformance",

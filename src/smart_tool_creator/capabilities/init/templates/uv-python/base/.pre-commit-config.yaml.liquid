@@ -10,19 +10,19 @@ repos:
 
       - id: ruff-check
         name: ruff check
-        entry: uv run ruff check --fix --force-exclude --config pyproject.toml
+        entry: uv run {% if adapter != "none" %}--extra mcp {% endif %}ruff check --fix --force-exclude --config pyproject.toml
         language: system
         types_or: [python, pyi]
 
       - id: ruff-format
         name: ruff format
-        entry: uv run ruff format --force-exclude --config pyproject.toml
+        entry: uv run {% if adapter != "none" %}--extra mcp {% endif %}ruff format --force-exclude --config pyproject.toml
         language: system
         types_or: [python, pyi, markdown]
 
       - id: ty-check
         name: ty check
-        entry: uv run ty check --output-format concise --no-progress .
+        entry: uv run {% if adapter != "none" %}--extra mcp {% endif %}ty check --output-format concise --no-progress .
         language: system
         types_or: [python, pyi]
         pass_filenames: false

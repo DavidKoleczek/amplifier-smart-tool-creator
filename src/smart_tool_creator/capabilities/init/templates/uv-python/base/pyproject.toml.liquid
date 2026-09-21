@@ -13,6 +13,12 @@ Repository = "{{ repository }}"
 
 [project.scripts]
 {{ name }} = "{{ package }}.cli:main"
+{% if adapter != "none" %}
+{{ name }}-mcp = "{{ package }}.adapters.mcp_server:main"
+
+[project.optional-dependencies]
+mcp = ["mcp>=2.2,<3.0"]
+{% endif %}
 
 [build-system]
 requires = ["uv_build>=0.12.5,<0.13.0"]

@@ -10,6 +10,7 @@ You are extending the smart tool at {{ root }}. It follows the Amplifier Smart T
 6. the `intelligence/` package, for the interface a model-backed capability runs through
 7. the existing tests, for how they fake the intelligence
 8. `reference/`, when it is there: the spec and the SDK, to read rather than recall
+9. `docs/03-portable-adapter.md`, when present, for the tool's optional MCP/MCP Apps surfaces and their limits
 
 A tool not scaffolded by smart-tool-creator may lay these out differently. Find the equivalents rather than assuming the paths.
 
@@ -35,6 +36,7 @@ One model-backed capability, complete:
 - the capability's own skill at `capabilities/<name>/SKILL.md`, beside its code: what it does and when to use it, every argument and what it is for, a worked CLI invocation and a worked Python one, what it returns, and how it fails. Body only, with no title and no deterministic or model-backed line, because the library renders those. Register it on the capability's row in the capability list the skill renders (`core/skill.py` `CAPABILITIES`, or this tool's equivalent) through `skill=`.
 - `<tool> <name> --help` prints that skill and `<tool> <name> -h` the terse generated table, which the tool's `tests/test_skill.py` enumerates over every capability.
 - sections in `docs/01-library.md` and `docs/02-cli.md`, and `skills/<name>/SKILL.md` when the tool ships one.
+- when an optional MCP or UI adapter already exists and the new capability belongs on it, expose the same typed library action with equivalent validation and authority. Keep receipts, drafts, grants, and retained state in the library; treat view context as observation. Do not add adapters, manifest fields, or protocol capabilities the request did not ask for.
 
 ## Models
 

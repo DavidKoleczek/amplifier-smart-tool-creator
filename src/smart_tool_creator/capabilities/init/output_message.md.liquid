@@ -1,6 +1,10 @@
 Scaffolded {{ name }} at {{ root }}
   {{ files | size }} files written as a {{ language }} tool with {{ intelligence }} intelligence, committed to a new git repository{% if placeholder %} with no remote{% else %} whose origin is {{ repository }}{% endif %}
   environment synced: `uv run {{ name }} manifest` works from that directory
+{%- if adapter != "none" %}
+  optional {{ adapter }} adapter ready: `uv run --extra mcp {{ name }}-mcp` starts stdio only when requested
+  read docs/03-portable-adapter.md before adding domain actions; the starter exposes only the deterministic manifest
+{%- endif %}
 {%- if skill %}
   Agent Skill at skills/{{ name }}/SKILL.md
 {%- endif %}

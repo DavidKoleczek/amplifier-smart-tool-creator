@@ -1,0 +1,27 @@
+import {build} from 'esbuild';
+import {readFile, readdir, writeFile} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+
+const root = new URL('./', import.meta.url);
+const result = await build({absWorkingDir:fileURLToPath(root), entryPoints:['src/app.js'], bundle:true, write:false, format:'iife', minify:true, metafile:true});
+const packageRoots = new Set();
+for (const input of Object.keys(result.metafile.inputs)) {
+  const segments = input.replaceAll('\\', '/').split('/');
+  const index = segments.lastIndexOf('node_modules');
+  if (index < 0) continue;
+  const count = segments[index + 1].startsWith('@') ? 3 : 2;
+  packageRoots.add(segments.slice(0, index + count).join('/') + '/');
+}
+const notices = ['Third-party software bundled into mcp_app.html.'];
+for (const directory of [...packageRoots].sort()) {
+  const packageRoot = new URL(directory, root);
+  const metadata = JSON.parse(await readFile(new URL('package.json', packageRoot), 'utf8'));
+  const files = (await readdir(packageRoot, {withFileTypes:true})).filter(entry => entry.isFile() && /^(license|licence|copying|notice)([.-].*)?$/i.test(entry.name)).map(entry => entry.name).sort();
+  if (!files.length) throw new Error(`No license/notice file found for ${metadata.name}. Include its license before distributing the view.`);
+  notices.push(`\n${metadata.name}@${metadata.version} (${metadata.license || 'see license below'})`);
+  for (const file of files) notices.push(`\n${file}\n${await readFile(new URL(file, packageRoot), 'utf8')}`);
+}
+await writeFile(new URL('../src/{{ package }}/adapters/mcp_app.LICENSE.txt', root), notices.join('\n') + '\n');
+const script = result.outputFiles[0].text.replaceAll('</script', '<\\/script');
+const template = await readFile(new URL('src/index.html', root), 'utf8');
+await writeFile(new URL('../src/{{ package }}/adapters/mcp_app.html', root), template.replace('<!-- APP_SCRIPT -->', () => `<!-- Third-party notices: mcp_app.LICENSE.txt -->\n<script>${script}</script>`));

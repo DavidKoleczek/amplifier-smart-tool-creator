@@ -19,6 +19,7 @@ from smart_tool_creator.schemas import (
     IntelligenceLayer,
     Language,
     Manifest,
+    OptionalAdapter,
     ReasoningEffort,
     ReviewGroup,
     Scaffold,
@@ -64,11 +65,13 @@ def init(
     intelligence: IntelligenceLayer = "copilot-sdk",
     skill: bool = False,
     repository: str | None = None,
+    adapter: OptionalAdapter = "none",
 ) -> Scaffold:
     """Scaffold a new smart tool: a git repository, synced, committed, and conforming to the spec.
 
     With `repository`, the URL it will be cloned from, the scaffold declares it in `pyproject.toml`, points every
     install instruction at it, and adds it as the `origin` remote; nothing is pushed.
+    `adapter` optionally adds MCP, or MCP with a bundled App. Neither starts a service or invokes a model.
     """
     return scaffold.init(
         name,
@@ -78,6 +81,7 @@ def init(
         intelligence=intelligence,
         skill=skill,
         repository=repository,
+        adapter=adapter,
     )
 
 
