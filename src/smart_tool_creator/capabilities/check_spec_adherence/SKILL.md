@@ -10,6 +10,12 @@ is written to the tool.
 ```bash
 smart-tool-creator check-spec-adherence --directory ~/src/incident-postmortem
 
+# through Amplifier Agent, on another model
+smart-tool-creator check-spec-adherence \
+  --directory ~/src/incident-postmortem \
+  --agent-provider amplifier-agent \
+  --model anthropic/claude-opus-5
+
 # one part of the checklist
 smart-tool-creator check-spec-adherence \
   --directory ~/src/incident-postmortem \
@@ -36,13 +42,18 @@ report.counts, report.deviating, report.findings, report.output_message
 - `--check ID`: repeatable; a check id from the list below. Every check when omitted. An id
   that is not on the list is refused before anything runs, and the message names the ids that
   are.
-- `--model`: the model the reviewers run on. Defaults to `gpt-5.6-terra`, faster than the
-  default of the other model-backed capabilities because a review reads much and writes
-  little.
+- `--agent-provider`: what the agent runs through, `{{ agent_providers | join: "` or `" }}`. The
+  first installed, in that order, when omitted.
+- `--model`: the model the reviewers run on: a Copilot model id for `copilot`,
+  `<provider>/<model>` for `amplifier-agent` (for instance `anthropic/claude-opus-5`).
+  Defaults to `{{ default_review_models.copilot }}` on `copilot` and
+  `{{ default_review_models["amplifier-agent"] }}` on `amplifier-agent`.
 - `--reasoning-effort`: how hard the model thinks before it answers, one of `low`, `medium`,
-  `high` (the default), `xhigh`, `max`.
-- `intelligence`, library only: the `Intelligence` implementation the reviewers run through;
-  `default_intelligence()` when omitted. Tests inject a fake.
+  `high`, `xhigh`, `max`. Defaults to `{{ default_review_reasoning_effort }}`. Applies to the
+  `copilot` agent provider only.
+- `intelligence`, library only: the `Intelligence` implementation the reviewers run through,
+  which wins over `agent_provider`; `resolve_intelligence(agent_provider)` when omitted. Tests
+  inject a fake.
 
 ## Result
 
@@ -100,10 +111,14 @@ failures                              error types, preflight code, exit codes, t
 
 ## Failures
 
-Model-backed: it runs through GitHub Copilot, signed in as the GitHub CLI's user, so `gh`
-must be installed and `gh auth login` completed with an account that has a Copilot
-subscription. With nothing configured it fails immediately and names what to set; it never
-falls back to a deterministic answer.
+Model-backed: it runs through the agent provider `--agent-provider` names. `copilot` runs
+through GitHub Copilot, signed in as the GitHub CLI's user, so `gh` must be installed and
+`gh auth login` completed with an account that has a Copilot subscription. `amplifier-agent`
+runs through Amplifier Agent and needs the credentials of the model provider `--model` names,
+for instance `OPENAI_API_KEY` for `openai/...`; see
+https://github.com/microsoft/amplifier-agent/blob/v1/docs/providers.md. An agent provider
+that is not installed fails with the command that installs it. With nothing configured it
+fails immediately and names what to set; it never falls back to a deterministic answer.
 
 A failure prints its message to stderr and exits 1: the directory holds no `smart-tool.json`
 (scaffold it with `init` first), a `--check` id is not on the checklist, `uv` is not on

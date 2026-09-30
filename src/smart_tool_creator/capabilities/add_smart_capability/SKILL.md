@@ -39,11 +39,19 @@ added.report, added.checks, added.fix_rounds, added.output_message
 - `--context TEXT`: repeatable free text, usually paths to notes, transcripts, or exemplars
   the agent should read before it designs anything. It reads the paths itself, so name them
   rather than pasting their contents.
-- `--model`: the model the agent runs on. Defaults to `gpt-6-astra`.
-- `--reasoning-effort`: how hard the model thinks before it acts, one of `low` (the default),
-  `medium`, `high`, `xhigh`, `max`.
-- `intelligence`, library only: the `Intelligence` implementation the agent runs through;
-  `default_intelligence()` when omitted. Tests inject a fake.
+- `--agent-provider`: what the agent runs through, `{{ agent_providers | join: "` or `" }}`. The
+  first installed, in that order, when omitted.
+- `--model`: the model the agent runs on: a Copilot model id for `copilot`,
+  `<provider>/<model>` for `amplifier-agent` (for instance
+  `{{ default_intelligence_models["amplifier-agent"] }}`). Defaults to
+  `{{ default_intelligence_models.copilot }}` on `copilot` and
+  `{{ default_intelligence_models["amplifier-agent"] }}` on `amplifier-agent`.
+- `--reasoning-effort`: how hard the model thinks before it acts, one of `low`, `medium`,
+  `high`, `xhigh`, `max`. Defaults to `{{ default_intelligence_reasoning_effort }}`. Applies to
+  the `copilot` agent provider only.
+- `intelligence`, library only: the `Intelligence` implementation the agent runs through,
+  which wins over `agent_provider`; `resolve_intelligence(agent_provider)` when omitted. Tests
+  inject a fake.
 
 ## Result
 
@@ -59,15 +67,3 @@ The prek check is skipped, never failed, when the tool has no `.pre-commit-confi
 and names the failing rules when it fails. A check still failing when the work stops is returned rather than
 raised and named in the message, and the CLI exits 1; the work stays in the tool's working
 tree either way, and what it is worth is the caller's call.
-
-## Failures
-
-Model-backed: it runs through GitHub Copilot, signed in as the GitHub CLI's user, so `gh`
-must be installed and `gh auth login` completed with an account that has a Copilot
-subscription. With nothing configured it fails immediately and names what to set; it never
-falls back to a deterministic answer.
-
-A failure prints its message to stderr and exits 1: the directory holds no `smart-tool.json`
-(scaffold it with `init` first), the request is empty, `uv` is not on `PATH`, the
-intelligence preflight fails, or the agent itself fails. An agent failure may leave partial
-edits in the tool's working tree, and the message says so. A bad invocation exits 2.

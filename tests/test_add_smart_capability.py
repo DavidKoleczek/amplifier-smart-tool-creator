@@ -10,7 +10,7 @@ from typer.testing import CliRunner
 
 from smart_tool_creator.capabilities.add_smart_capability.capability import MAX_FIX_ROUNDS
 from smart_tool_creator.cli import app
-from smart_tool_creator.intelligence.interface import Intelligence, default_intelligence
+from smart_tool_creator.intelligence.interface import Intelligence, resolve_intelligence
 from smart_tool_creator.intelligence.schemas import AgentRequest, AgentResult
 from smart_tool_creator.lib import add_smart_capability, init
 from smart_tool_creator.schemas import DEFAULT_INTELLIGENCE_MODEL, AddedCapability, Check, SmartToolCreatorError
@@ -262,7 +262,7 @@ def test_the_cli_exits_one_when_a_check_is_still_failing(monkeypatch: pytest.Mon
 
 @pytest.mark.skipif(
     os.environ.get("SMART_TOOL_CREATOR_LIVE") != "1",
-    reason="Runs a real Copilot agent; set SMART_TOOL_CREATOR_LIVE=1 to include it.",
+    reason="Runs a real agent through the first installed agent provider; set SMART_TOOL_CREATOR_LIVE=1 to include it.",
 )
 def test_live_adds_a_working_capability_to_a_scaffolded_tool(tool: Path) -> None:
     added = add_smart_capability(
@@ -304,10 +304,10 @@ class BreaksTheToolOnce:
 
 @pytest.mark.skipif(
     os.environ.get("SMART_TOOL_CREATOR_LIVE") != "1",
-    reason="Runs a real Copilot agent; set SMART_TOOL_CREATOR_LIVE=1 to include it.",
+    reason="Runs a real agent through the first installed agent provider; set SMART_TOOL_CREATOR_LIVE=1 to include it.",
 )
 def test_live_a_fix_round_resumes_the_implementation_session(tool: Path) -> None:
-    intelligence = BreaksTheToolOnce(default_intelligence(), tool)
+    intelligence = BreaksTheToolOnce(resolve_intelligence(), tool)
 
     added = add_smart_capability(
         "Add a model-backed capability `greet` that takes a name and returns a one-line greeting",

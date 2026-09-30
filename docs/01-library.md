@@ -19,7 +19,12 @@ class Intelligence(Protocol):
 `run` executes one agent: `AgentRequest` holds the prompt, model, optional workspace, and optional output schema; `AgentResult` holds the text, structured output, or error. 
 Setting `AgentRequest.resume` to an earlier `AgentResult.session_id` continues that session instead of starting a fresh one, so the agent keeps what it learned.
 
-`default_intelligence()` returns the shipped implementation, `CopilotIntelligence`, built on the [GitHub Copilot SDK](https://github.com/github/copilot-sdk) and signed in through the GitHub CLI. 
+`resolve_intelligence(agent_provider)` returns a shipped implementation, one per agent provider, each installed through the extra of the same name:
+
+- `copilot`: `CopilotIntelligence`, built on the [GitHub Copilot SDK](https://github.com/github/copilot-sdk) and signed in through the GitHub CLI.
+- `amplifier-agent`: `AmplifierAgentIntelligence`, built on [Amplifier Agent](https://github.com/microsoft/amplifier-agent). The model is `<provider>/<model>`, and `reasoning_effort` is ignored. Sessions live under the platform's per-user state directory, in `smart-tool-creator/amplifier-agent`.
+
+Without an agent provider named, the first installed in that order is used; one that is not installed raises `SmartToolCreatorError` with the command that installs it. 
 Another implementation is a module satisfying the protocol and a branch in that factory.
 
 ## Manifest
@@ -166,16 +171,18 @@ Reviews a smart tool against the parts of the spec the conformance kit cannot de
 def check_spec_adherence(
     directory: Path | None = None,
     checks: list[str] | None = None,
-    model: str = DEFAULT_REVIEW_MODEL,
-    reasoning_effort: ReasoningEffort = "high",
+    agent_provider: AgentProvider | None = None,
+    model: str | None = None,
+    reasoning_effort: ReasoningEffort = DEFAULT_REVIEW_REASONING_EFFORT,
     intelligence: Intelligence | None = None,
 ) -> SpecAdherenceReport
 ```
 
 - `directory`: the tool's distribution root; the current directory when omitted. It must hold a `smart-tool.json` at its root, and no parent directory is searched.
 - `checks`: the ids to review, from the checklist below; every check when omitted.
-- `model` and `reasoning_effort`: the reviewers. The defaults differ from the other model-backed capabilities: `DEFAULT_REVIEW_MODEL` is `gpt-5.6-terra` at `high` effort, a faster model thinking harder, because a review reads much and writes little. Effort is one of `low`, `medium`, `high`, `xhigh`, `max`.
-- `intelligence`: the implementation to run through; `default_intelligence()` when omitted. Tests inject a fake.
+- `agent_provider`: `copilot` or `amplifier-agent`; the first installed when omitted.
+- `model` and `reasoning_effort`: the reviewers. `DEFAULT_REVIEW_MODELS` is `gpt-6.1-sol` on `copilot` and `openai/gpt-6.1-sol` on `amplifier-agent`, and `DEFAULT_REVIEW_REASONING_EFFORT` is `medium`. Effort is one of `low`, `medium`, `high`, `xhigh`, `max`, and applies to `copilot` only.
+- `intelligence`: the implementation to run through, which wins over `agent_provider`; `resolve_intelligence(agent_provider)` when omitted. Tests inject a fake.
 
 The kit runs first, through `check_conformance`. When its verdict is `FAIL`, no reviewer runs: the report carries the kit's verdict, no findings, and an `output_message` saying to fix the failing rules and call again. Judgment about a tool that fails the mechanical rules is spent on problems the kit has already named.
 
@@ -266,8 +273,9 @@ def add_smart_capability(
     request: str,
     directory: Path | None = None,
     context: list[str] | None = None,
-    model: str = DEFAULT_INTELLIGENCE_MODEL,
-    reasoning_effort: ReasoningEffort = "low",
+    agent_provider: AgentProvider | None = None,
+    model: str | None = None,
+    reasoning_effort: ReasoningEffort = DEFAULT_INTELLIGENCE_REASONING_EFFORT,
     intelligence: Intelligence | None = None,
 ) -> AddedCapability
 ```
@@ -275,8 +283,9 @@ def add_smart_capability(
 - `request`: the whole brief for one capability: what it does, for whom, and what it takes in and gives back.
 - `directory`: the tool to work in; the current directory when omitted. It must hold a `smart-tool.json` at its root, and no parent directory is searched, so a workspace holding several tools can never be extended by accident.
 - `context`: repeatable free text, usually paths to notes, transcripts, or exemplars. The agent reads the paths itself, so name them rather than pasting their contents.
-- `model` and `reasoning_effort`: the agent behind the work. Effort is one of `low`, `medium`, `high`, `xhigh`, `max`.
-- `intelligence`: the implementation to run through; `default_intelligence()` when omitted. Tests inject a fake.
+- `agent_provider`: `copilot` or `amplifier-agent`; the first installed when omitted.
+- `model` and `reasoning_effort`: the agent behind the work. `DEFAULT_INTELLIGENCE_MODELS` is `gpt-6-astra` on `copilot` and `openai/gpt-6-astra` on `amplifier-agent`, and `DEFAULT_INTELLIGENCE_REASONING_EFFORT` is `high`. Effort is one of `low`, `medium`, `high`, `xhigh`, `max`, and applies to `copilot` only.
+- `intelligence`: the implementation to run through, which wins over `agent_provider`; `resolve_intelligence(agent_provider)` when omitted. Tests inject a fake.
 
 After the agent finishes, the tool's own checks run in its root: `uv run pytest`, `prek run --all-files`, and the conformance kit through `check_conformance`. The prek check is `skipped`, never failed, when the tool has no `.pre-commit-config.yaml` or `prek` is not on `PATH`; the conformance check is `skipped` when the kit itself could not run, and when it fails its output is the failing rules with their details and spec sentences. While any check fails, another agent run gets the failing commands and their output and fixes them, up to `MAX_FIX_ROUNDS` (2). Each fix round continues the implementation run's session, so the agent still has the work it just did in context. Checks still failing after that are returned, not raised: the caller decides what the partial work is worth.
 

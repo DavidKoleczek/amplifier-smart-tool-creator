@@ -10,10 +10,12 @@ from pydantic import BaseModel, ValidationError
 
 from smart_tool_creator.capabilities.check_conformance.capability import check_conformance
 from smart_tool_creator.capabilities.check_spec_adherence.checks import checks_by_id, select
-from smart_tool_creator.intelligence.interface import Intelligence, default_intelligence
+from smart_tool_creator.intelligence.interface import Intelligence, select_intelligence
 from smart_tool_creator.intelligence.schemas import AgentRequest, HostWorkspace
 from smart_tool_creator.schemas import (
-    DEFAULT_REVIEW_MODEL,
+    DEFAULT_REVIEW_MODELS,
+    DEFAULT_REVIEW_REASONING_EFFORT,
+    AgentProvider,
     ConformanceReport,
     Finding,
     FindingStatus,
@@ -53,13 +55,14 @@ class Submission(BaseModel):
 def check_spec_adherence(
     directory: Path | None = None,
     checks: list[str] | None = None,
-    model: str = DEFAULT_REVIEW_MODEL,
-    reasoning_effort: ReasoningEffort = "high",
+    agent_provider: AgentProvider | None = None,
+    model: str | None = None,
+    reasoning_effort: ReasoningEffort = DEFAULT_REVIEW_REASONING_EFFORT,
     intelligence: Intelligence | None = None,
 ) -> SpecAdherenceReport:
     """Review the smart tool at `directory` against the spec sentences the conformance kit cannot decide."""
     root = (Path.cwd() if directory is None else directory).resolve()
-    intelligence = default_intelligence() if intelligence is None else intelligence
+    intelligence, model = select_intelligence(intelligence, agent_provider, model, DEFAULT_REVIEW_MODELS)
     groups = _preflight(root, checks, intelligence)
 
     conformance = check_conformance(directory=root)

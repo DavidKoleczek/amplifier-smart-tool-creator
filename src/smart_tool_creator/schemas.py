@@ -3,11 +3,23 @@ from typing import Literal, NamedTuple
 
 from pydantic import BaseModel, Field
 
-DEFAULT_INTELLIGENCE_MODEL = "gpt-6-astra"
-# A review reads much and writes little, so a faster model thinking harder beats a slower one.
-DEFAULT_REVIEW_MODEL = "gpt-5.6-terra"
-DEFAULT_PROBE_TIMEOUT_SECONDS = 20.0
 ReasoningEffort = Literal["low", "medium", "high", "xhigh", "max"]
+AgentProvider = Literal["copilot", "amplifier-agent"]
+# Also the order an agent provider is picked in when none is named.
+AGENT_PROVIDERS: tuple[AgentProvider, ...] = ("copilot", "amplifier-agent")
+
+DEFAULT_INTELLIGENCE_MODEL = "gpt-6-astra"
+DEFAULT_INTELLIGENCE_MODELS: dict[AgentProvider, str] = {
+    "copilot": DEFAULT_INTELLIGENCE_MODEL,
+    "amplifier-agent": "openai/gpt-6-astra",
+}
+DEFAULT_INTELLIGENCE_REASONING_EFFORT: ReasoningEffort = "high"
+DEFAULT_REVIEW_MODELS: dict[AgentProvider, str] = {
+    "copilot": "gpt-6.1-sol",
+    "amplifier-agent": "openai/gpt-6.1-sol",
+}
+DEFAULT_REVIEW_REASONING_EFFORT: ReasoningEffort = "medium"
+DEFAULT_PROBE_TIMEOUT_SECONDS = 20.0
 
 SEMVER_PATTERN = r"^\d+\.\d+\.\d+$"
 SLUG_PATTERN = r"^[a-z0-9]+(-[a-z0-9]+)*$"

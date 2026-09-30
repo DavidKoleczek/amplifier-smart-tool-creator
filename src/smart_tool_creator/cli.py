@@ -13,14 +13,29 @@ from typer.models import CommandFunctionType
 
 from smart_tool_creator import lib
 from smart_tool_creator.schemas import (
-    DEFAULT_INTELLIGENCE_MODEL,
+    DEFAULT_INTELLIGENCE_MODELS,
+    DEFAULT_INTELLIGENCE_REASONING_EFFORT,
     DEFAULT_PROBE_TIMEOUT_SECONDS,
-    DEFAULT_REVIEW_MODEL,
+    DEFAULT_REVIEW_MODELS,
+    DEFAULT_REVIEW_REASONING_EFFORT,
+    AgentProvider,
     IntelligenceLayer,
     Language,
     ReasoningEffort,
     SmartToolCreatorError,
 )
+
+AGENT_PROVIDER_HELP = (
+    "What the model-backed work runs through: copilot (GitHub Copilot, signed in as the GitHub CLI's user) or "
+    "amplifier-agent (Amplifier Agent, with the model provider's credentials). The first installed, in that order, "
+    "when omitted."
+)
+REASONING_EFFORT_NOTE = "Applies to the copilot agent provider only."
+
+
+def _model_help(defaults: dict[AgentProvider, str]) -> str:
+    named = "; ".join(f"{agent_provider}: {model}" for agent_provider, model in defaults.items())
+    return f"A Copilot model id for copilot, <provider>/<model> for amplifier-agent. Defaults to {named}."
 
 
 class CapabilityCommand(TyperCommand):
@@ -172,15 +187,26 @@ def check_spec_adherence(
         list[str] | None,
         typer.Option("--check", help="Repeatable; a check id to review, from the checklist; every check when omitted."),
     ] = None,
-    model: Annotated[str, typer.Option("--model", help="The model the reviewers run on.")] = DEFAULT_REVIEW_MODEL,
+    agent_provider: Annotated[
+        AgentProvider | None,
+        typer.Option("--agent-provider", help=AGENT_PROVIDER_HELP),
+    ] = None,
+    model: Annotated[
+        str | None,
+        typer.Option("--model", help=f"The model the reviewers run on. {_model_help(DEFAULT_REVIEW_MODELS)}"),
+    ] = None,
     reasoning_effort: Annotated[
-        ReasoningEffort, typer.Option("--reasoning-effort", help="How hard the model thinks before it answers.")
-    ] = "high",
+        ReasoningEffort,
+        typer.Option(
+            "--reasoning-effort", help=f"How hard the model thinks before it answers. {REASONING_EFFORT_NOTE}"
+        ),
+    ] = DEFAULT_REVIEW_REASONING_EFFORT,
 ) -> None:
-    """Review a smart tool against the parts of the spec the conformance kit cannot decide, and suggest fixes. Model-backed: runs through GitHub Copilot, signed in as the GitHub CLI's user."""
+    """Review a smart tool against the parts of the spec the conformance kit cannot decide, and suggest fixes. Model-backed: runs through GitHub Copilot or Amplifier Agent, whichever --agent-provider names."""
     report = lib.check_spec_adherence(
         directory=directory,
         checks=check,
+        agent_provider=agent_provider,
         model=model,
         reasoning_effort=reasoning_effort,
     )
@@ -201,16 +227,25 @@ def add_smart_capability(
         list[str] | None,
         typer.Option("--context", help="Repeatable; text, or paths the agent should read before it designs anything."),
     ] = None,
-    model: Annotated[str, typer.Option("--model", help="The model the agent runs on.")] = DEFAULT_INTELLIGENCE_MODEL,
+    agent_provider: Annotated[
+        AgentProvider | None,
+        typer.Option("--agent-provider", help=AGENT_PROVIDER_HELP),
+    ] = None,
+    model: Annotated[
+        str | None,
+        typer.Option("--model", help=f"The model the agent runs on. {_model_help(DEFAULT_INTELLIGENCE_MODELS)}"),
+    ] = None,
     reasoning_effort: Annotated[
-        ReasoningEffort, typer.Option("--reasoning-effort", help="How hard the model thinks before it acts.")
-    ] = "low",
+        ReasoningEffort,
+        typer.Option("--reasoning-effort", help=f"How hard the model thinks before it acts. {REASONING_EFFORT_NOTE}"),
+    ] = DEFAULT_INTELLIGENCE_REASONING_EFFORT,
 ) -> None:
-    """Add one model-backed capability to an existing smart tool: library, CLI, tests, and docs, verified against the tool's own checks. Model-backed: runs through GitHub Copilot, signed in as the GitHub CLI's user."""
+    """Add one model-backed capability to an existing smart tool: library, CLI, tests, and docs, verified against the tool's own checks. Model-backed: runs through GitHub Copilot or Amplifier Agent, whichever --agent-provider names."""
     added = lib.add_smart_capability(
         request,
         directory=directory,
         context=context,
+        agent_provider=agent_provider,
         model=model,
         reasoning_effort=reasoning_effort,
     )

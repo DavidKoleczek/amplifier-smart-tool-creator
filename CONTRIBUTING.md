@@ -10,7 +10,8 @@ Install:
 - [uv](https://docs.astral.sh/uv/getting-started/installation/) 0.9.17 or newer: Manages Python environments. Older versions cannot read the project's relative `exclude-newer` setting.
 - [prek](https://github.com/j178/prek): Used for precommit hooks. Recommended to install through PyPI/uv with `uv tool install prek`. Use `uv tool upgrade prek` to update it.
 - [GitHub CLI](https://cli.github.com/) for intelligence features with GitHub Copilot.
-- [GitHub Copilot subscription](https://github.com/github/copilot-cli#prerequisites) for intelligent features.
+- [GitHub Copilot subscription](https://github.com/github/copilot-cli#prerequisites) for intelligent features through the `copilot` agent provider.
+- [Model provider credentials](https://github.com/microsoft/amplifier-agent/blob/v1/docs/providers.md), such as `OPENAI_API_KEY`, for intelligent features through the `amplifier-agent` agent provider.
 
 ### Initial Setup
 
@@ -81,6 +82,15 @@ Run tests:
 
 ```bash
 uv run pytest
+```
+
+Run the deterministic capabilities on an install without either agent provider, then restore the full environment:
+
+```bash
+uv sync --no-extra copilot --no-extra amplifier-agent
+uv run smart-tool-creator manifest
+uv run pytest
+uv sync --all-extras --all-groups
 ```
 
 #### Conformance

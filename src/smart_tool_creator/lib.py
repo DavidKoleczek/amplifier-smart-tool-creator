@@ -11,10 +11,11 @@ from smart_tool_creator.core import manifest
 from smart_tool_creator.core import skill as skill_module
 from smart_tool_creator.intelligence.interface import Intelligence
 from smart_tool_creator.schemas import (
-    DEFAULT_INTELLIGENCE_MODEL,
+    DEFAULT_INTELLIGENCE_REASONING_EFFORT,
     DEFAULT_PROBE_TIMEOUT_SECONDS,
-    DEFAULT_REVIEW_MODEL,
+    DEFAULT_REVIEW_REASONING_EFFORT,
     AddedCapability,
+    AgentProvider,
     ConformanceReport,
     IntelligenceLayer,
     Language,
@@ -94,18 +95,21 @@ def check_conformance(
 def check_spec_adherence(
     directory: Path | None = None,
     checks: list[str] | None = None,
-    model: str = DEFAULT_REVIEW_MODEL,
-    reasoning_effort: ReasoningEffort = "high",
+    agent_provider: AgentProvider | None = None,
+    model: str | None = None,
+    reasoning_effort: ReasoningEffort = DEFAULT_REVIEW_REASONING_EFFORT,
     intelligence: Intelligence | None = None,
 ) -> SpecAdherenceReport:
     """Review a smart tool against the parts of the spec the conformance kit cannot decide, and suggest fixes.
 
     The kit runs first: when it fails, no reviewer runs and the report says to fix the failing rules.
     `checks` names the ids to review, from the checklist `spec_checks()` returns.
+    `agent_provider` is the first installed one when omitted, and `model` that agent provider's default for a review.
     """
     return adherence.check_spec_adherence(
         directory=directory,
         checks=checks,
+        agent_provider=agent_provider,
         model=model,
         reasoning_effort=reasoning_effort,
         intelligence=intelligence,
@@ -121,15 +125,20 @@ def add_smart_capability(
     request: str,
     directory: Path | None = None,
     context: list[str] | None = None,
-    model: str = DEFAULT_INTELLIGENCE_MODEL,
-    reasoning_effort: ReasoningEffort = "low",
+    agent_provider: AgentProvider | None = None,
+    model: str | None = None,
+    reasoning_effort: ReasoningEffort = DEFAULT_INTELLIGENCE_REASONING_EFFORT,
     intelligence: Intelligence | None = None,
 ) -> AddedCapability:
-    """Add one model-backed capability to an existing smart tool, then hold it to that tool's own checks."""
+    """Add one model-backed capability to an existing smart tool, then hold it to that tool's own checks.
+
+    `agent_provider` is the first installed one when omitted, and `model` that agent provider's default.
+    """
     return capability.add_smart_capability(
         request,
         directory=directory,
         context=context,
+        agent_provider=agent_provider,
         model=model,
         reasoning_effort=reasoning_effort,
         intelligence=intelligence,

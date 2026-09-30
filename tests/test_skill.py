@@ -6,7 +6,7 @@ import typer
 from typer.testing import CliRunner
 
 from smart_tool_creator.cli import app
-from smart_tool_creator.core.skill import CAPABILITIES
+from smart_tool_creator.core.skill import CAPABILITIES, ENVIRONMENT, SKILL_VARIABLES
 from smart_tool_creator.lib import (
     capability_skill_resources,
     load_manifest,
@@ -15,7 +15,7 @@ from smart_tool_creator.lib import (
     skill_directory,
     skill_resources,
 )
-from smart_tool_creator.schemas import SmartToolCreatorError
+from smart_tool_creator.schemas import DEFAULT_INTELLIGENCE_MODELS, DEFAULT_REVIEW_MODELS, SmartToolCreatorError
 
 DISTRIBUTION_ROOT = Path(__file__).parents[1]
 # The tool's skill routes to the capability skills, so it stays a router rather than a manual.
@@ -87,7 +87,8 @@ def test_every_capability_ships_the_files_its_skill_names() -> None:
 def test_every_capability_skill_is_its_markdown_in_the_tool_s_shape() -> None:
     for capability in CAPABILITIES:
         document = skill(capability.name)
-        body = (skill_directory() / capability.skill).read_text(encoding="utf-8").strip()
+        template = (skill_directory() / capability.skill).read_text(encoding="utf-8")
+        body = ENVIRONMENT.render(template, **SKILL_VARIABLES).strip()
         kind = "Model-backed." if capability.model_backed else "Deterministic."
 
         assert document.startswith(f'<skill_content name="smart-tool-creator {capability.name}">')
@@ -97,6 +98,19 @@ def test_every_capability_skill_is_its_markdown_in_the_tool_s_shape() -> None:
         assert document.endswith("</skill_content>")
         if not capability.resources:
             assert "<skill_resources>" not in document
+
+
+@pytest.mark.parametrize(
+    ("name", "defaults"),
+    [("add-smart-capability", DEFAULT_INTELLIGENCE_MODELS), ("check-spec-adherence", DEFAULT_REVIEW_MODELS)],
+)
+def test_a_capability_skill_renders_its_default_models_from_the_code(name: str, defaults: dict[str, str]) -> None:
+    document = skill(name)
+
+    for model in defaults.values():
+        assert f"`{model}`" in document
+    assert "{{" not in document
+    assert "{%" not in document
 
 
 def test_an_unknown_capability_names_the_ones_that_exist() -> None:

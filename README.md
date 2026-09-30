@@ -4,28 +4,41 @@
 
 Smart Tool Creator is the [Smart Tool](https://github.com/microsoft/amplifier-smart-tools) for building smart tools.
 It scaffolds the structure the spec requires, checks a tool against the spec and its conformance kit, and evaluates a tool's model-backed capabilities in isolation.
-The intelligence inside is implemented with the [GitHub Copilot SDK](https://github.com/github/copilot-sdk) behind an interface that other agent SDKs can implement with others to come.
+The intelligence inside runs through an agent provider, the [GitHub Copilot SDK](https://github.com/github/copilot-sdk) or [Amplifier Agent](https://github.com/microsoft/amplifier-agent), behind an interface that other agent SDKs can implement.
 
 ## Installation
 
 Prerequisites:
 - Requires [uv](https://docs.astral.sh/uv/getting-started/installation/) 0.9.17 or newer.
-- [GitHub CLI](https://cli.github.com/) signed in to an account with a [GitHub Copilot subscription](https://github.com/github/copilot-cli#prerequisites) for the intelligent features.
+- For the intelligent features, one of:
+  - `copilot` agent provider: [GitHub CLI](https://cli.github.com/) signed in to an account with a [GitHub Copilot subscription](https://github.com/github/copilot-cli#prerequisites).
+  - `amplifier-agent` agent provider: the model provider's credentials, for instance `OPENAI_API_KEY` for the default `openai/...` models. See [providers](https://github.com/microsoft/amplifier-agent/blob/v1/docs/providers.md).
 
 ```bash
-uv tool install git+https://github.com/DavidKoleczek/amplifier-smart-tool-creator
+uv tool install "amplifier-smart-tool-creator[all] @ git+https://github.com/DavidKoleczek/amplifier-smart-tool-creator"
 ```
 
 To use it as a library:
 
 ```bash
-uv add "amplifier-smart-tool-creator @ git+https://github.com/DavidKoleczek/amplifier-smart-tool-creator"
+uv add "amplifier-smart-tool-creator[all] @ git+https://github.com/DavidKoleczek/amplifier-smart-tool-creator"
 ```
 
 To run it once without installing:
 
 ```bash
-uvx --from git+https://github.com/DavidKoleczek/amplifier-smart-tool-creator smart-tool-creator --help
+uvx --from "amplifier-smart-tool-creator[all] @ git+https://github.com/DavidKoleczek/amplifier-smart-tool-creator" smart-tool-creator --help
+```
+
+`[all]` brings both agent providers. Alternatives:
+
+```bash
+# Only the GitHub Copilot agent provider
+uv tool install "amplifier-smart-tool-creator[copilot] @ git+https://github.com/DavidKoleczek/amplifier-smart-tool-creator"
+# Only the Amplifier Agent agent provider
+uv tool install "amplifier-smart-tool-creator[amplifier-agent] @ git+https://github.com/DavidKoleczek/amplifier-smart-tool-creator"
+# Deterministic capabilities only
+uv tool install git+https://github.com/DavidKoleczek/amplifier-smart-tool-creator
 ```
 
 To teach a coding agent how to use it, install the [skill](skills/smart-tool-creator/SKILL.md):
@@ -62,6 +75,9 @@ smart-tool-creator check-conformance --directory ./incident-postmortem
 
 # Review a smart tool against the parts of the spec the kit cannot decide, and get suggestions
 smart-tool-creator check-spec-adherence --directory ./incident-postmortem
+
+# The same review through Amplifier Agent on another model
+smart-tool-creator check-spec-adherence --directory ./incident-postmortem --agent-provider amplifier-agent --model anthropic/claude-opus-5
 
 # Add one model-backed capability to an existing smart tool, verified against that tool's own checks
 smart-tool-creator add-smart-capability "Given an incident id, fetch its chat transcript and alert timeline from the incident platform and draft a blameless postmortem: summary, impact, contributing factors, and action items with owners" --directory ./incident-postmortem

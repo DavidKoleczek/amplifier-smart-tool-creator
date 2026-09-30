@@ -3,8 +3,18 @@
 from importlib.metadata import metadata
 from pathlib import Path
 
+from liquid import Environment, StrictUndefined
+
 from smart_tool_creator.core.manifest import MANIFEST_PATH, load_manifest
-from smart_tool_creator.schemas import Capability, SmartToolCreatorError
+from smart_tool_creator.schemas import (
+    AGENT_PROVIDERS,
+    DEFAULT_INTELLIGENCE_MODELS,
+    DEFAULT_INTELLIGENCE_REASONING_EFFORT,
+    DEFAULT_REVIEW_MODELS,
+    DEFAULT_REVIEW_REASONING_EFFORT,
+    Capability,
+    SmartToolCreatorError,
+)
 
 DISTRIBUTION = "amplifier-smart-tool-creator"
 
@@ -39,6 +49,16 @@ CAPABILITIES = (
 
 # Paths relative to the skill directory. Both ship inside the package, so both resolve after installation.
 SKILL_RESOURCES = ("SMART_TOOL.md", "lib.py")
+
+ENVIRONMENT = Environment(undefined=StrictUndefined)
+# Capability skills are Liquid templates so what they say about defaults cannot drift from the code that applies them.
+SKILL_VARIABLES = {
+    "agent_providers": AGENT_PROVIDERS,
+    "default_intelligence_models": DEFAULT_INTELLIGENCE_MODELS,
+    "default_review_models": DEFAULT_REVIEW_MODELS,
+    "default_intelligence_reasoning_effort": DEFAULT_INTELLIGENCE_REASONING_EFFORT,
+    "default_review_reasoning_effort": DEFAULT_REVIEW_REASONING_EFFORT,
+}
 
 
 def skill_directory() -> Path:
@@ -105,7 +125,8 @@ def _capability_skill(name: str) -> str:
     # The body and the resources are checked together, so neither can name a file the package does not ship.
     body_path, *resources = _installed((entry.skill, *entry.resources))
     kind = "Model-backed." if entry.model_backed else "Deterministic."
-    body = [kind, "", (skill_directory() / body_path).read_text(encoding="utf-8").strip()]
+    template = (skill_directory() / body_path).read_text(encoding="utf-8")
+    body = [kind, "", ENVIRONMENT.render(template, **SKILL_VARIABLES).strip()]
     return _document(
         f"{tool} {entry.name}",
         [f"Part of `{tool}`; `{tool} --help` is the tool's skill."],

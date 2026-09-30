@@ -11,11 +11,14 @@ from smart_tool_creator.capabilities.check_conformance.capability import (
     clean_environment,
     conformance_command,
 )
-from smart_tool_creator.intelligence.interface import Intelligence, default_intelligence
+from smart_tool_creator.intelligence.interface import Intelligence, select_intelligence
 from smart_tool_creator.intelligence.schemas import AgentRequest, AgentResult, HostWorkspace
 from smart_tool_creator.schemas import (
     DEFAULT_INTELLIGENCE_MODEL,
+    DEFAULT_INTELLIGENCE_MODELS,
+    DEFAULT_INTELLIGENCE_REASONING_EFFORT,
     AddedCapability,
+    AgentProvider,
     Check,
     ReasoningEffort,
     SmartToolCreatorError,
@@ -43,15 +46,16 @@ def add_smart_capability(
     request: str,
     directory: Path | None = None,
     context: list[str] | None = None,
-    model: str = DEFAULT_INTELLIGENCE_MODEL,
-    reasoning_effort: ReasoningEffort = "low",
+    agent_provider: AgentProvider | None = None,
+    model: str | None = None,
+    reasoning_effort: ReasoningEffort = DEFAULT_INTELLIGENCE_REASONING_EFFORT,
     intelligence: Intelligence | None = None,
 ) -> AddedCapability:
     """Extend an existing smart tool with one model-backed capability, then hold it to the tool's own checks."""
     root = (Path.cwd() if directory is None else directory).resolve()
     request = " ".join(request.split())
     entries = list(context or [])
-    intelligence = default_intelligence() if intelligence is None else intelligence
+    intelligence, model = select_intelligence(intelligence, agent_provider, model, DEFAULT_INTELLIGENCE_MODELS)
     _preflight(request, root, intelligence)
 
     prompt = _render(
