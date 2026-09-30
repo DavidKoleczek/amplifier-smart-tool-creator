@@ -1,5 +1,8 @@
 # Smart Tool Creator
 
+> [!IMPORTANT]
+> This repository has moved to [microsoft/amplifier-smart-tool-creator](https://github.com/microsoft/amplifier-smart-tool-creator). It is no longer maintained here.
+
 [Explore the website](https://davidkoleczek.github.io/amplifier-smart-tool-creator/)
 
 Smart Tool Creator is the [Smart Tool](https://github.com/microsoft/amplifier-smart-tools) for building smart tools.
